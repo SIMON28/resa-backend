@@ -1,0 +1,5 @@
+*.class
+/resa-backend/.settings
+/resa-backend/target/
+/resa-commons/.settings
+/resa-commons/target/
