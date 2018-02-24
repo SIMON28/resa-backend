@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.asptt.resabackend.resources.adherent.AdherentDaoImpl;
 
 public class FicheSecurite implements Serializable {
 
@@ -29,7 +31,8 @@ public class FicheSecurite implements Serializable {
     private int nbEncadrants;
     private Date datePlongee;
 
-    private final Logger logger = Logger.getLogger(getClass().getName());
+	private static final org.slf4j.Logger LOGGER = LoggerFactory
+			.getLogger(AdherentDaoImpl.class);
 
     public FicheSecurite() {
     }

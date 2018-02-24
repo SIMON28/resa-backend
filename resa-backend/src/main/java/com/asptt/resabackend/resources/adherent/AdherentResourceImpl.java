@@ -18,13 +18,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import com.asptt.resa.commons.annotation.PATCH;
-import com.asptt.resabackend.commons.resource.ResourceBaseResa;
+import com.asptt.resa.commons.resource.ResourceBase;
+//import com.asptt.resabackend.commons.resource.ResourceBaseResa;
 import com.asptt.resabackend.entity.Adherent;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @Path("adherent")
 @Component("adherentResource")
-public class AdherentResourceImpl extends ResourceBaseResa<Adherent> {
+public class AdherentResourceImpl extends ResourceBase<Adherent> {
 
 	@Autowired
 	private AdherentService service;

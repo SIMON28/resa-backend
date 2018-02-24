@@ -6,14 +6,15 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
-import org.apache.log4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.asptt.resa.commons.exception.TechnicalException;
 
 public class ResaUtil {
 
     static final long ONE_DAY_IN_MILLIS = 86400000;
-    private final Logger logger = Logger.getLogger(getClass());
+	private static final org.slf4j.Logger LOGGER = LoggerFactory
+			.getLogger(ResaUtil.class);
 
     public static int calculNbHeure(Date dateDuJour, Date datePlongee) throws TechnicalException {
         long diffMilli = datePlongee.getTime() - dateDuJour.getTime();

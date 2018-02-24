@@ -1,0 +1,59 @@
+<Configuration monitorInterval="60">
+	<Properties>
+		<Property name="path">logs</Property>
+	</Properties>
+	<Loggers>
+		<Logger name="org.springframework.web" level="info" additivity="false">
+			<AppenderRef ref="SpringBoot-Appender" />
+			<AppenderRef ref="Console-Appender" />
+		</Logger>
+		<Logger name="com.asptt.resabackend" level="info"  additivity="false">
+			<AppenderRef ref="App-Appender" />
+			<AppenderRef ref="Console-Appender" />
+		</Logger>
+		<Root>
+			<AppenderRef ref="Console-Appender" />
+		</Root>
+	</Loggers>
+	<Appenders>
+		<!-- 1. Console Appender -->
+		<Console name="Console-Appender" target="SYSTEM_OUT">
+			<PatternLayout>
+				<pattern>
+					[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{5} - %msg%n
+				</pattern>
+			</PatternLayout>
+		</Console>
+
+		<!-- 2. File Appender with file "${path}/resaPlongee_log.log" 
+		<RollingFile name="App-Appender" 
+			fileName="${path}/resaPlongee_log.log" 
+			filePattern="${path}/resaPlongee_%d{MM-dd-yyyy-HH-mm}.log"
+			ignoreExceptions="false">
+			<PatternLayout>
+				<pattern>
+					[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{5} - %msg%n
+				</pattern>
+			</PatternLayout>
+			<TimeBasedTriggeringPolicy />
+		</RollingFile>-->
+
+		<!-- 2. File Appender with file "${path}/resaPlongee_log.log" -->
+		<File name="App-Appender" fileName="${path}/resaPlongee_log.log">
+			<PatternLayout>
+				<pattern>
+					[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{5} - %msg%n
+				</pattern>
+			</PatternLayout>
+		</File>
+
+		<!-- 3. File Appender with file "${path}/springboot_log.log" -->
+		<File name="SpringBoot-Appender" fileName="${path}/springboot_log.log">
+			<PatternLayout>
+				<pattern>
+					[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{5} - %msg%n
+				</pattern>
+			</PatternLayout>
+		</File>
+	</Appenders>
+</Configuration>

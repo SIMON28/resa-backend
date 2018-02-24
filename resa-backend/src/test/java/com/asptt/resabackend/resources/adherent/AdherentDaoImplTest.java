@@ -33,6 +33,7 @@ public class AdherentDaoImplTest {
 	@Test
 	public void getAdherentById() {
 		Adherent adh = adherentDao.get("096042");
+		LOGGER.info("ok pour getAdherentById");
 		Assert.assertEquals(adh.getNumeroLicense(), "096042");
 	}
 
@@ -62,6 +63,11 @@ public class AdherentDaoImplTest {
 		adh.setDateCM(new Date());
 		adh.setAnneeCotisation(2000);
 		adh.setCommentaire("");
+//		List<String> l_roles = new ArrayList<>();
+//		l_roles.add(Roles.ADMIN.name());
+//		l_roles.add(Roles.USER.name());
+//		l_roles.add(Roles.SECRETARIAT.name());
+//		adh.setRoles(l_roles);
 		try {
 			Adherent adhUpdated = adherentDao.update(adh);
 			Assert.assertEquals("toto", adhUpdated.getPrenom());

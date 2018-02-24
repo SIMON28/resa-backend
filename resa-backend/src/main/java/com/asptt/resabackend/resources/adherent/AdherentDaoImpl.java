@@ -17,14 +17,9 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.EmptyResultDataAccessException;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
 import com.asptt.resa.commons.dao.Dao;
-import com.asptt.resa.commons.exception.NotFound;
-import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.Technical;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.entity.Adherent;
@@ -39,9 +34,6 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 	private static final org.slf4j.Logger LOGGER = LoggerFactory
 			.getLogger(AdherentDaoImpl.class);
 
-	@Autowired 
-	private JdbcTemplate jdbcTemplate;
-	
 	@Autowired
 	private DataSource dataSource;
 
@@ -72,39 +64,25 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 
 	@Override
 	public Adherent get(String id) {
-//		Connection conex = null;
-//		try {
-//			conex = getDataSource().getConnection();
-//			PreparedStatement st = conex.prepareStatement(
-//					"select * from ADHERENT where LICENSE = ? and ACTIF <> 0 and (DATE_FIN is null or CURRENT_TIMESTAMP < DATE_FIN)");
-//			st.setString(1, id);
-//			ResultSet rs = st.executeQuery();
-//			Adherent adherent = null;
-//			if (rs.next()) {
-//				adherent = wrapAdherent(rs);
-//			}
-//			return adherent;
-//		} catch (SQLException e) {
-//			// log.error(e.getMessage(), e);
-//			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-//		} finally {
-//			closeConnexion(conex);
-//		}
+		Connection conex = null;
 		try {
-		Adherent adh = jdbcTemplate.queryForObject(
-				"select * from ADHERENT where LICENSE = ? and ACTIF <> 0 and (DATE_FIN is null or CURRENT_TIMESTAMP < DATE_FIN)",
-				new Object[] { id }, 
-				new RowMapper<Adherent>(){
-		            @Override
-					public Adherent mapRow(ResultSet rs, int rowNum) throws  SQLException {
-		            	return wrapAdherent(rs);
-		            }
-		        });
-		return adh;
-		} catch (EmptyResultDataAccessException e) {
-			throw new NotFoundException(NotFound.GENERIC, e.getMessage());
+			conex = getDataSource().getConnection();
+			PreparedStatement st = conex.prepareStatement(
+					"select * from ADHERENT where LICENSE = ? and ACTIF <> 0 and (DATE_FIN is null or CURRENT_TIMESTAMP < DATE_FIN)");
+			st.setString(1, id);
+			ResultSet rs = st.executeQuery();
+			Adherent adherent = null;
+			if (rs.next()) {
+				adherent = wrapAdherent(rs);
+			}
+			return adherent;
+		} catch (SQLException e) {
+			// log.error(e.getMessage(), e);
+			throw new TechnicalException(Technical.GENERIC, e.getMessage());
+		} finally {
+			closeConnexion(conex);
 		}
-		
+	
 	}
 
 	@Override

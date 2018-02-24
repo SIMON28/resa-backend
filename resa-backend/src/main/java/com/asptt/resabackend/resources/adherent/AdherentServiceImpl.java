@@ -4,12 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.asptt.resa.commons.dao.Dao;
-import com.asptt.resabackend.commons.service.ServiceBaseResa;
+import com.asptt.resa.commons.service.ServiceBase;
+//import com.asptt.resabackend.commons.service.ServiceBaseResa;
 import com.asptt.resabackend.entity.Adherent;
 
 
 @Service("adherentService")
-public class AdherentServiceImpl extends ServiceBaseResa<Adherent> implements AdherentService {
+public class AdherentServiceImpl extends ServiceBase<Adherent> implements AdherentService {
 
 	@Autowired
 	private Dao<Adherent> adherentDao;
