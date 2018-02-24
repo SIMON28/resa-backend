@@ -1,4 +1,5 @@
 *.class
+*.log
 /resa-backend/.settings
 /resa-backend/target/
 /resa-commons/.settings
