@@ -1,12 +1,17 @@
 package com.asptt.resa.commons.resource;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+
 import javax.ws.rs.ext.ContextResolver;
 import javax.ws.rs.ext.Provider;
 
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector;
@@ -39,7 +44,17 @@ public class JacksonJaxbFormatProvider implements ContextResolver<ObjectMapper> 
 
 		// Ignore unknow properties
 		mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
+		// serialization des timestamp
+		mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		
+		// Ignore null
+		mapper.setSerializationInclusion(Include.NON_NULL);
+		// Ignore empty
+		mapper.setSerializationInclusion(Include.NON_EMPTY);
+		// fixe format date
+		final DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+		mapper.setDateFormat(df);
+		
 		return mapper;
 	}
 

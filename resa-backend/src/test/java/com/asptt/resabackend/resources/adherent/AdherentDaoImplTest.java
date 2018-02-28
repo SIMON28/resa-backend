@@ -1,6 +1,8 @@
 package com.asptt.resabackend.resources.adherent;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -16,6 +18,7 @@ import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.ApplicationTest;
 import com.asptt.resabackend.entity.Adherent;
+import com.asptt.resabackend.entity.Adherent.Roles;
 import com.asptt.resabackend.entity.NiveauAutonomie;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -41,6 +44,8 @@ public class AdherentDaoImplTest {
 	public void getAdherentByUnknownId() {
 		try {
 		Adherent adh = adherentDao.get("9lpm25");
+		LOGGER.info("Adherent non trouve");
+		Assert.assertEquals(null, adh);
 		} catch(NotFoundException e) {
 			Assert.assertEquals("404-0", e.getCategory()+"-"+e.getCode().getCode());
 		}
@@ -63,19 +68,22 @@ public class AdherentDaoImplTest {
 		adh.setDateCM(new Date());
 		adh.setAnneeCotisation(2000);
 		adh.setCommentaire("");
-//		List<String> l_roles = new ArrayList<>();
-//		l_roles.add(Roles.ADMIN.name());
-//		l_roles.add(Roles.USER.name());
-//		l_roles.add(Roles.SECRETARIAT.name());
-//		adh.setRoles(l_roles);
+		List<String> l_roles = new ArrayList<>();
+		l_roles.add(Roles.ADMIN.name());
+		l_roles.add(Roles.USER.name());
+		l_roles.add(Roles.SECRETARIAT.name());
+		adh.setRoles(l_roles);
+		List<String> contacts = new ArrayList<>();
+		contacts.add("113");
+		adh.setContacts(contacts);
+		
 		try {
 			Adherent adhUpdated = adherentDao.update(adh);
 			Assert.assertEquals("toto", adhUpdated.getPrenom());
+			Assert.assertEquals(adh, adhUpdated);
 			LOGGER.info("On a bien une mise à jour");
 		} catch (TechnicalException e) {
 			LOGGER.debug("mise à jour d'un adherent plantée"+e.getMessage());
-			Assert.fail("mise à jour d'un adherent plantée");
-			// La duplication a bien été controlée
 		}
 	}
 }

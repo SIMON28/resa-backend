@@ -20,10 +20,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.asptt.resa.commons.dao.Dao;
+import com.asptt.resa.commons.exception.Functional;
+import com.asptt.resa.commons.exception.FunctionalException;
 import com.asptt.resa.commons.exception.Technical;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.Adherent.Encadrement;
+import com.asptt.resabackend.entity.Adherent.Roles;
 import com.asptt.resabackend.entity.Aptitude;
 import com.asptt.resabackend.entity.ContactUrgent;
 import com.asptt.resabackend.entity.NiveauAutonomie;
@@ -31,8 +34,7 @@ import com.asptt.resabackend.entity.NiveauAutonomie;
 @Repository("adherentDao")
 public class AdherentDaoImpl implements Dao<Adherent> {
 
-	private static final org.slf4j.Logger LOGGER = LoggerFactory
-			.getLogger(AdherentDaoImpl.class);
+	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(AdherentDaoImpl.class);
 
 	@Autowired
 	private DataSource dataSource;
@@ -73,6 +75,9 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 			ResultSet rs = st.executeQuery();
 			Adherent adherent = null;
 			if (rs.next()) {
+				String license = rs.getString("LICENSE");
+				getStrRoles(license);
+				getContacts(license);
 				adherent = wrapAdherent(rs);
 			}
 			return adherent;
@@ -82,7 +87,7 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 		} finally {
 			closeConnexion(conex);
 		}
-	
+
 	}
 
 	@Override
@@ -132,17 +137,18 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 				parameters.entrySet().stream().forEach(entry -> {
 					sb.append(" " + entry.getValue().get(0) + " LIKE ? AND ");
 				});
-				sb.delete(sb.length()-5, sb.length()-1);
+				sb.delete(sb.length() - 5, sb.length() - 1);
 				sb.append(" order by NOM");
 				st = conex.prepareStatement(sb.toString());
-				for(Map.Entry<Integer, List<String>> entry : parameters.entrySet()){
+				for (Map.Entry<Integer, List<String>> entry : parameters.entrySet()) {
 					try {
 						st.setString(entry.getKey(), entry.getValue().get(1));
 					} catch (SQLException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-				};
+				}
+				;
 			}
 			LOGGER.info("Requete SQL Find avec critera=" + st.toString());
 			ResultSet rs = st.executeQuery();
@@ -161,100 +167,137 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 
 	@Override
 	public Adherent update(Adherent resource) {
-        Connection conex = null;
-        try {
-            conex = getDataSource().getConnection();
-            StringBuffer sb = new StringBuffer();
-            sb.append("UPDATE ADHERENT");
-            sb.append(" SET NIVEAU = ?,");
-            sb.append(" TELEPHONE = ?,");
-            sb.append(" MAIL = ?,");
-            sb.append(" ENCADRANT = ?,");
-            sb.append(" PILOTE = ?,");
-            sb.append(" ACTIF = ?,");
-            sb.append(" NOM = ?,");
-            sb.append(" PRENOM = ?,");
-            sb.append(" DATE_CM = ?,");
-            sb.append(" ANNEE_COTI = ?,");
-            sb.append(" TIV = ?,");
-            sb.append(" COMMENTAIRE = ?,");
-            sb.append(" APTITUDE = ?");
-            sb.append(" WHERE license = ?");
+		Connection conex = null;
+		try {
+			conex = getDataSource().getConnection();
+			StringBuffer sb = new StringBuffer();
+			sb.append("UPDATE ADHERENT");
+			sb.append(" SET NIVEAU = ?,");
+			sb.append(" TELEPHONE = ?,");
+			sb.append(" MAIL = ?,");
+			sb.append(" ENCADRANT = ?,");
+			sb.append(" PILOTE = ?,");
+			sb.append(" ACTIF = ?,");
+			sb.append(" NOM = ?,");
+			sb.append(" PRENOM = ?,");
+			sb.append(" DATE_CM = ?,");
+			sb.append(" ANNEE_COTI = ?,");
+			sb.append(" TIV = ?,");
+			sb.append(" COMMENTAIRE = ?,");
+			sb.append(" APTITUDE = ?");
+			sb.append(" WHERE license = ?");
 
-            PreparedStatement st = conex.prepareStatement(sb.toString());
-            st.setString(1, resource.getNiveau());
-            st.setString(2, resource.getTelephone());
-            st.setString(3, resource.getMail());
-            if (resource.isEncadrent()) {
-                st.setString(4, resource.getEncadrement());
-            } else {
-                st.setString(4, null);
-            }
-            if (resource.isPilote()) {
-                st.setInt(5, 1);
-            } else {
-                st.setInt(5, 0);
-            }
-            st.setInt(6, resource.getActifInt());
-            st.setString(7, resource.getNom());
-            st.setString(8, resource.getPrenom());
-            Timestamp ts = new Timestamp(resource.getDateCM().getTime());
-            st.setTimestamp(9, ts);
-            st.setInt(10, resource.getAnneeCotisation());
-            if (resource.isTiv()) {
-                st.setInt(11, 1);
-            } else {
-                st.setInt(11, 0);
-            }
-            st.setString(12, resource.getCommentaire());
-            if (resource.isAptitude()) {
-                st.setString(13, resource.getAptitude());
-            } else {
-                st.setString(13, null);
-            }
-            st.setString(14, resource.getNumeroLicense());
-            if (st.executeUpdate() == 0) {
-                throw new TechnicalException(Technical.GENERIC,
-                        "L'adhérent n'a pu être modifié");
-            }
-            sb = new StringBuffer();
+			PreparedStatement st = conex.prepareStatement(sb.toString());
+			st.setString(1, resource.getNiveau());
+			st.setString(2, resource.getTelephone());
+			st.setString(3, resource.getMail());
+			if (resource.isEncadrent()) {
+				st.setString(4, resource.getEncadrement());
+			} else {
+				st.setString(4, null);
+			}
+			if (resource.isPilote()) {
+				st.setInt(5, 1);
+			} else {
+				st.setInt(5, 0);
+			}
+			st.setInt(6, resource.getActifInt());
+			st.setString(7, resource.getNom());
+			st.setString(8, resource.getPrenom());
+			Timestamp ts = new Timestamp(resource.getDateCM().getTime());
+			st.setTimestamp(9, ts);
+			st.setInt(10, resource.getAnneeCotisation());
+			if (resource.isTiv()) {
+				st.setInt(11, 1);
+			} else {
+				st.setInt(11, 0);
+			}
+			st.setString(12, resource.getCommentaire());
+			if (resource.isAptitude()) {
+				st.setString(13, resource.getAptitude());
+			} else {
+				st.setString(13, null);
+			}
+			st.setString(14, resource.getNumeroLicense());
+			if (st.executeUpdate() == 0) {
+				throw new TechnicalException(Technical.GENERIC, "L'adhérent n'a pu être modifié");
+			}
 
-            // gestion des roles 1er temps : on supprime les roles
-            sb.append("DELETE FROM REL_ADHERENT_ROLES WHERE ADHERENT_LICENSE = ? ");
-            PreparedStatement st1 = conex.prepareStatement(sb.toString());
-            st1.setString(1, resource.getNumeroLicense());
-            if (st1.executeUpdate() == 0) {
-            	LOGGER.info("Impossible de supprimer les roles de l'adherent");
-//                throw new TechnicalException(Technical.GENERIC,"Impossible de supprimer les roles de l'adherent");
-            }
-            // gestion des roles 2ieme temps : on les re-creer
-            Iterator it = resource.getRoles().iterator();
-            sb = new StringBuffer();
-            while (it.hasNext()) {
-                sb.append("INSERT INTO REL_ADHERENT_ROLES (`ADHERENT_LICENSE`, `ROLES_idROLES`)");
-                sb.append(" VALUES (?, ?)");
-                st = conex.prepareStatement(sb.toString());
-                st.setString(1, resource.getNumeroLicense());
-                Adherent.Roles role =(Adherent.Roles)it.next();
-                int id = getIdRole(role.name());
-                st.setInt(2, id);
-                if (st.executeUpdate() == 0) {
-                    throw new TechnicalException(Technical.GENERIC,
-                            "Le role n'a pu être enregistré");
-                }
-                sb = null;
-                sb = new StringBuffer();
-            }
-            //Mise à jour des contacts
-            updateContactsForAdherent(resource);
+			// gestion des roles 1er temps : on supprime les roles
+			sb = new StringBuffer();
+			sb.append("DELETE FROM REL_ADHERENT_ROLES WHERE ADHERENT_LICENSE = ? ");
+			PreparedStatement st1 = conex.prepareStatement(sb.toString());
+			st1.setString(1, resource.getNumeroLicense());
+			if (st1.executeUpdate() == 0) {
+				LOGGER.info("Impossible de supprimer les roles de l'adherent dans la table de relation");
+			} else {
+				LOGGER.info("suppression des roles de l'adherent ["+resource.getNumeroLicense()+"] dans la table de relation");
+			}
 
-            return resource;
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new TechnicalException(Technical.GENERIC,e.getMessage());
-        } finally {
-            closeConnexion(conex);
-        }
+			// gestion des roles 2ieme temps : on les re-creer
+			Iterator<Roles> itRoles = resource.getRoles().iterator();
+			sb = new StringBuffer();
+			while (itRoles.hasNext()) {
+				sb.append("INSERT INTO REL_ADHERENT_ROLES (`ADHERENT_LICENSE`, `ROLES_idROLES`)");
+				sb.append(" VALUES (?, ?)");
+				PreparedStatement strole = conex.prepareStatement(sb.toString());
+				strole.setString(1, resource.getNumeroLicense());
+				Adherent.Roles role = itRoles.next();
+				int id = getIdRole(role.name());
+				strole.setInt(2, id);
+				if (strole.executeUpdate() == 0) {
+					throw new TechnicalException(Technical.GENERIC, "Le role n'a pu être enregistré");
+				}
+				sb = null;
+				sb = new StringBuffer();
+			}
+
+			// Mise à jour des contacts
+			// 1er temps :vérification de l'existance des contacts à mettre à jour
+			for (String contactId : resource.getContacts()) {
+				ContactUrgent contact = getContactUrgentById(contactId);
+				if (null == contact) {
+					// Problème ce nouveau contact n'existe pas
+					throw new FunctionalException(Functional.AUTHENTICATION,
+							"Le contactUrgent id [" + contactId + "] n'a pas pu etre ajouter : existe pas ");
+				}
+			}
+			// 2ieme temps : on supprime les contact existant dans la table de relation
+			sb = new StringBuffer();
+			sb.append("DELETE FROM REL_ADHERENT_CONTACT WHERE ADHERENT_LICENSE = ? ");
+			PreparedStatement stContact = conex.prepareStatement(sb.toString());
+			stContact.setString(1, resource.getNumeroLicense());
+			if (stContact.executeUpdate() == 0) {
+				LOGGER.info("Impossible de supprimer les contact de l'adherent dans la table de relation");
+			} else {
+				LOGGER.info("suppression des contacts de l'adherent ["+resource.getNumeroLicense()+"] dans la table de relation");
+			}
+
+			// 3ieme temps : on re-cree les contacts dans la table de relation
+			Iterator<String> itContact = resource.getContacts().iterator();
+			sb = new StringBuffer();
+			for(String contactId : resource.getContacts()){
+				sb.append("INSERT INTO REL_ADHERENT_CONTACT (`ADHERENT_LICENSE`, `CONTACT_URGENT_IDCONTACT`)");
+				sb.append(" VALUES (?, ?)");
+				PreparedStatement st2 = conex.prepareStatement(sb.toString());
+				st2.setString(1, resource.getNumeroLicense());
+				st2.setString(2, contactId);
+				if (st2.executeUpdate() == 0) {
+					throw new TechnicalException(Technical.GENERIC, "Le contact n'a pu être enregistré");
+				}
+				sb = null;
+				sb = new StringBuffer();
+			}
+
+//			updateContactsForAdherent(resource.getNumeroLicense());
+
+			return resource;
+		} catch (SQLException e) {
+			LOGGER.error(e.getMessage(), e);
+			throw new TechnicalException(Technical.GENERIC, e.getMessage());
+		} finally {
+			closeConnexion(conex);
+		}
 	}
 
 	@Override
@@ -263,7 +306,7 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 
 	}
 
-	public List<String> getStrRoles(Adherent adherent) throws TechnicalException {
+	public List<String> getStrRoles(String adherentId) throws TechnicalException {
 		PreparedStatement st;
 		Connection conex = null;
 		try {
@@ -272,7 +315,7 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 			sb.append(" where rel.ROLES_idROLES = r.idROLES ");
 			sb.append(" and rel.ADHERENT_LICENSE = ?");
 			st = conex.prepareStatement(sb.toString());
-			st.setString(1, adherent.getNumeroLicense());
+			st.setString(1, adherentId);
 			ResultSet rs = st.executeQuery();
 			List<String> result = new ArrayList<>();
 			while (rs.next()) {
@@ -286,7 +329,7 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 		}
 	}
 
-	public List<ContactUrgent> getContacts(Adherent adh) throws TechnicalException {
+	public List<String> getContacts(String adherentId) throws TechnicalException {
 		Connection conex = null;
 		try {
 			conex = getDataSource().getConnection();
@@ -298,15 +341,41 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 			sb.append(" order by cu.IDCONTACT");
 
 			PreparedStatement st = conex.prepareStatement(sb.toString());
-			st.setString(1, adh.getNumeroLicense());
+			st.setString(1, adherentId);
 			ResultSet rs = st.executeQuery();
 
-			List<ContactUrgent> contacts = new ArrayList<>();
+			List<String> contactsId = new ArrayList<>();
 			while (rs.next()) {
 				ContactUrgent contact = wrapContact(rs);
-				contacts.add(contact);
+				contactsId.add(contact.getId().toString());
 			}
-			return contacts;
+			return contactsId;
+
+		} catch (SQLException e) {
+			throw new TechnicalException(Technical.GENERIC, e.getMessage());
+		} finally {
+			closeConnexion(conex);
+		}
+	}
+
+	public ContactUrgent getContactUrgentById(String contactId) throws TechnicalException {
+		Connection conex = null;
+		try {
+			conex = getDataSource().getConnection();
+			StringBuffer sb = new StringBuffer();
+			sb.append("SELECT cu.idCONTACT, cu.TITRE, cu.NOM, cu.PRENOM, cu.TELEPHONE, cu.TELEPHTWO");
+			sb.append(" FROM CONTACT_URGENT cu");
+			sb.append(" where cu.IDCONTACT = ?");
+
+			PreparedStatement st = conex.prepareStatement(sb.toString());
+			st.setString(1, contactId);
+			ResultSet rs = st.executeQuery();
+
+			ContactUrgent contact = null;
+			while (rs.next()) {
+				contact = wrapContact(rs);
+			}
+			return contact;
 
 		} catch (SQLException e) {
 			throw new TechnicalException(Technical.GENERIC, e.getMessage());
@@ -335,7 +404,7 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 			encadrant = Encadrement.valueOf(rs.getString("ENCADRANT"));
 		}
 		adherent.setEnumEncadrement(encadrant);
-		adherent.setRoles(getStrRoles(adherent));
+		adherent.setRoles(getStrRoles(licence));
 		adherent.setActifInt(rs.getInt("ACTIF"));
 		if (pilote == 1) {
 			adherent.setPilote(true);
@@ -351,7 +420,7 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 		adherent.setCommentaire(rs.getString("COMMENTAIRE"));
 		adherent.setPassword(rs.getString("PASSWORD"));
 		// Pour les Contacts
-		adherent.setContacts(getContacts(adherent));
+		adherent.setContacts(getContacts(licence));
 
 		// Pour les nouveaux champs date du certificat medical et annee de cotisation
 		Date dateCM = rs.getDate("DATE_CM");
@@ -383,219 +452,220 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 
 		return contact;
 	}
-    public int getIdRole(String libelle) throws TechnicalException {
-        PreparedStatement st;
-        Connection conex = null;
-        try {
-            conex = getDataSource().getConnection();
-            StringBuffer sb = new StringBuffer("select idRoles from ROLES where libelle=? ");
-            st = conex.prepareStatement(sb.toString());
-            st.setString(1, libelle);
-            ResultSet rs = st.executeQuery();
-            int id = 0;
-            while (rs.next()) {
-                id = rs.getInt("IdRoles");
-            }
-            return id;
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new TechnicalException(Technical.GENERIC,e.getMessage());
-        } finally {
-            closeConnexion(conex);
-        }
-    }
 
-    public void updateContactsForAdherent(Adherent adh) throws TechnicalException {
+	public int getIdRole(String libelle) throws TechnicalException {
+		PreparedStatement st;
+		Connection conex = null;
+		try {
+			conex = getDataSource().getConnection();
+			StringBuffer sb = new StringBuffer("select idRoles from ROLES where libelle=? ");
+			st = conex.prepareStatement(sb.toString());
+			st.setString(1, libelle);
+			ResultSet rs = st.executeQuery();
+			int id = 0;
+			while (rs.next()) {
+				id = rs.getInt("IdRoles");
+			}
+			return id;
+		} catch (SQLException e) {
+			LOGGER.error(e.getMessage(), e);
+			throw new TechnicalException(Technical.GENERIC, e.getMessage());
+		} finally {
+			closeConnexion(conex);
+		}
+	}
 
-        List<ContactUrgent> anciensContacts = getContacts(adh);
-        List<ContactUrgent> contactsAMettreAjour = adh.getContacts();
+//    public void updateContactsForAdherent(Adherent adh) throws TechnicalException {
+//
+//        List<ContactUrgent> anciensContacts = getContacts(adh);
+//        List<ContactUrgent> contactsAMettreAjour = adh.getContacts();
+//
+//        List<ContactUrgent> newContacts = new ArrayList<ContactUrgent>();
+//        List<ContactUrgent> delContacts = new ArrayList<ContactUrgent>();
+//        List<ContactUrgent> majContacts = new ArrayList<ContactUrgent>();
+//
+//        for (ContactUrgent contact : contactsAMettreAjour) {
+//            ContactUrgent result = findContact(contact, adh);
+//            if (null == result) {
+//                //Ce contact n'existe pas : on le met dans la liste des contacts à créer
+//                newContacts.add(contact);
+//            } else {
+//                //Contact à mettre à jour
+//                if (anciensContacts.contains(contact)) {
+//                    contact.setId(result.getId());
+//                    majContacts.add(contact);
+//                }
+//            }
+//        }
+//        // Recherche des contacts à supprimer
+//        for (ContactUrgent contact : anciensContacts) {
+//            if (!contactsAMettreAjour.contains(contact)) {
+//                delContacts.add(contact);
+//            }
+//        }
+//
+//        createContacts(newContacts, adh);
+//        updateContacts(majContacts);
+//        deleteContacts(delContacts, adh);
+//
+//    }
 
-        List<ContactUrgent> newContacts = new ArrayList<>();
-        List<ContactUrgent> delContacts = new ArrayList<>();
-        List<ContactUrgent> majContacts = new ArrayList<>();
+	public ContactUrgent findContact(ContactUrgent contact, Adherent adh) throws TechnicalException {
+		Connection conex = null;
+		try {
+			conex = getDataSource().getConnection();
+			StringBuffer sb = new StringBuffer();
+			sb.append("SELECT c.idCONTACT, c.TITRE, c.NOM, c.PRENOM, c.TELEPHONE, c.TELEPHTWO");
+			sb.append(" FROM REL_ADHERENT_CONTACT rel , CONTACT_URGENT c");
+			sb.append(" WHERE rel.CONTACT_URGENT_idCONTACT = c.idCONTACT");
+			sb.append(" AND c.NOM = ?");
+			sb.append(" AND c.PRENOM = ?");
+			sb.append(" AND rel.ADHERENT_LICENSE = ?");
 
-        for (ContactUrgent contact : contactsAMettreAjour) {
-            ContactUrgent result = findContact(contact, adh);
-            if (null == result) {
-                //Ce contact n'existe pas : on le met dans la liste des contacts à créer
-                newContacts.add(contact);
-            } else {
-                //Contact à mettre à jour
-                if (anciensContacts.contains(contact)) {
-                    contact.setId(result.getId());
-                    majContacts.add(contact);
-                }
-            }
-        }
-        // Recherche des contacts à supprimer
-        for (ContactUrgent contact : anciensContacts) {
-            if (!contactsAMettreAjour.contains(contact)) {
-                delContacts.add(contact);
-            }
-        }
+			PreparedStatement st = conex.prepareStatement(sb.toString());
+			st.setString(1, contact.getNom());
+			st.setString(2, contact.getPrenom());
+			st.setString(3, adh.getNumeroLicense());
+			ResultSet rs = st.executeQuery();
 
-        createContacts(newContacts, adh);
-        updateContacts(majContacts);
-        deleteContacts(delContacts, adh);
+			if (rs.next()) {
+				ContactUrgent result = wrapContact(rs);
+				return result;
+			} else {
+				return null;
+			}
 
-    }
+		} catch (SQLException e) {
+			LOGGER.error(e.getMessage(), e);
+			throw new TechnicalException(Technical.GENERIC, e.getMessage());
+		} finally {
+			closeConnexion(conex);
+		}
+	}
 
-    public ContactUrgent findContact(ContactUrgent contact, Adherent adh) throws TechnicalException {
-        Connection conex = null;
-        try {
-            conex = getDataSource().getConnection();
-            StringBuffer sb = new StringBuffer();
-            sb.append("SELECT c.idCONTACT, c.TITRE, c.NOM, c.PRENOM, c.TELEPHONE, c.TELEPHTWO");
-            sb.append(" FROM REL_ADHERENT_CONTACT rel , CONTACT_URGENT c");
-            sb.append(" WHERE rel.CONTACT_URGENT_idCONTACT = c.idCONTACT");
-            sb.append(" AND c.NOM = ?");
-            sb.append(" AND c.PRENOM = ?");
-            sb.append(" AND rel.ADHERENT_LICENSE = ?");
+	public void createContacts(List<ContactUrgent> contacts, Adherent adh) throws TechnicalException {
+		Connection conex = null;
+		try {
+			conex = getDataSource().getConnection();
+			PreparedStatement st = null;
+			for (ContactUrgent contact : contacts) {
+				StringBuffer sb = new StringBuffer();
+				sb.append("INSERT INTO CONTACT_URGENT (`TITRE`, `NOM`, `PRENOM`, `TELEPHONE`, `TELEPHTWO`)");
+				sb.append(" VALUES (?, ?, ?, ?, ?)");
+				st = conex.prepareStatement(sb.toString());
+				st.setString(1, contact.getTitre());
+				st.setString(2, contact.getNom());
+				st.setString(3, contact.getPrenom());
+				st.setString(4, contact.getTelephone());
+				st.setString(5, contact.getTelephtwo());
+				if (st.executeUpdate() == 0) {
+					throw new TechnicalException(Technical.GENERIC,
+							"Le contact :" + contact.getNom() + "n'a pu être creé");
+				} else {
+					// on recupere l'id du contact que l'on vient de créer
+					StringBuffer sb1 = new StringBuffer();
+					sb1.append("SELECT max(idCONTACT) FROM CONTACT_URGENT c");
+					st = conex.prepareStatement(sb1.toString());
+					ResultSet rs = st.executeQuery();
+					if (rs.next()) {
+						int idContact = rs.getInt("max(idCONTACT)");
+						// On crée la relation
+						StringBuffer sb2 = new StringBuffer();
+						sb2.append("INSERT INTO REL_ADHERENT_CONTACT (`ADHERENT_LICENSE`, `CONTACT_URGENT_IDCONTACT`)");
+						sb2.append(" VALUES (?, ?)");
+						st = conex.prepareStatement(sb2.toString());
+						st.setString(1, adh.getNumeroLicense());
+						st.setInt(2, idContact);
+						if (st.executeUpdate() == 0) {
+							throw new TechnicalException(Technical.GENERIC,
+									"La relation adherent" + adh.getNom() + " le contact :" + contact.getNom() + ", "
+											+ contact.getPrenom() + "n'a pu être creé");
+						}
+					} else {
+						throw new TechnicalException(Technical.GENERIC,
+								"Imossible de recuperer le dernier contact créer");
+					}
 
-            PreparedStatement st = conex.prepareStatement(sb.toString());
-            st.setString(1, contact.getNom());
-            st.setString(2, contact.getPrenom());
-            st.setString(3, adh.getNumeroLicense());
-            ResultSet rs = st.executeQuery();
+				}
+			}
+		} catch (SQLException e) {
+			LOGGER.error(e.getMessage(), e);
+			throw new TechnicalException(Technical.GENERIC, e.getMessage());
+		} finally {
+			closeConnexion(conex);
+		}
+	}
 
-            if (rs.next()) {
-                ContactUrgent result = wrapContact(rs);
-                return result;
-            } else {
-                return null;
-            }
+	public void updateContacts(List<ContactUrgent> contacts) throws TechnicalException {
+		Connection conex = null;
+		try {
+			for (ContactUrgent contact : contacts) {
+				conex = getDataSource().getConnection();
+				StringBuffer sb = new StringBuffer();
+				sb.append("UPDATE CONTACT_URGENT");
+				sb.append(" SET TITRE = ?,");
+				sb.append(" NOM = ?,");
+				sb.append(" PRENOM = ?,");
+				sb.append(" TELEPHONE = ?,");
+				sb.append(" TELEPHTWO = ?");
+				sb.append(" WHERE IDCONTACT = ?");
 
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new TechnicalException(Technical.GENERIC,e.getMessage());
-        } finally {
-            closeConnexion(conex);
-        }
-    }
+				PreparedStatement st = conex.prepareStatement(sb.toString());
+				st.setString(1, contact.getTitre());
+				st.setString(2, contact.getNom());
+				st.setString(3, contact.getPrenom());
+				st.setString(4, contact.getTelephone());
+				st.setString(5, contact.getTelephtwo());
+				st.setInt(6, contact.getId());
+				if (st.executeUpdate() == 0) {
+					throw new TechnicalException(Technical.GENERIC,
+							"Le Contact id : " + contact.getId() + "n'a pu être mis à jour");
+				}
+			}
+		} catch (SQLException e) {
+			LOGGER.error(e.getMessage(), e);
+			throw new TechnicalException(Technical.GENERIC, e.getMessage());
+		} finally {
+			closeConnexion(conex);
+		}
+	}
 
-    public void createContacts(List<ContactUrgent> contacts, Adherent adh) throws TechnicalException {
-        Connection conex = null;
-        try {
-            conex = getDataSource().getConnection();
-            PreparedStatement st = null;
-            for (ContactUrgent contact : contacts) {
-                StringBuffer sb = new StringBuffer();
-                sb.append("INSERT INTO CONTACT_URGENT (`TITRE`, `NOM`, `PRENOM`, `TELEPHONE`, `TELEPHTWO`)");
-                sb.append(" VALUES (?, ?, ?, ?, ?)");
-                st = conex.prepareStatement(sb.toString());
-                st.setString(1, contact.getTitre());
-                st.setString(2, contact.getNom());
-                st.setString(3, contact.getPrenom());
-                st.setString(4, contact.getTelephone());
-                st.setString(5, contact.getTelephtwo());
-                if (st.executeUpdate() == 0) {
-                    throw new TechnicalException(Technical.GENERIC,
-                            "Le contact :" + contact.getNom() + "n'a pu être creé");
-                } else {
-                    //on recupere l'id du contact que l'on vient de créer 
-                    StringBuffer sb1 = new StringBuffer();
-                    sb1.append("SELECT max(idCONTACT) FROM CONTACT_URGENT c");
-                    st = conex.prepareStatement(sb1.toString());
-                    ResultSet rs = st.executeQuery();
-                    if (rs.next()) {
-                        int idContact = rs.getInt("max(idCONTACT)");
-                        //On crée la relation
-                        StringBuffer sb2 = new StringBuffer();
-                        sb2.append("INSERT INTO REL_ADHERENT_CONTACT (`ADHERENT_LICENSE`, `CONTACT_URGENT_IDCONTACT`)");
-                        sb2.append(" VALUES (?, ?)");
-                        st = conex.prepareStatement(sb2.toString());
-                        st.setString(1, adh.getNumeroLicense());
-                        st.setInt(2, idContact);
-                        if (st.executeUpdate() == 0) {
-                            throw new TechnicalException(Technical.GENERIC,
-                                    "La relation adherent" + adh.getNom() + " le contact :" + contact.getNom() + ", " + contact.getPrenom() + "n'a pu être creé");
-                        }
-                    } else {
-                        throw new TechnicalException(Technical.GENERIC,
-                                "Imossible de recuperer le dernier contact créer");
-                    }
+	public void deleteContacts(List<ContactUrgent> contacts, Adherent adh) throws TechnicalException {
+		Connection conex = null;
+		try {
+			conex = getDataSource().getConnection();
+			PreparedStatement st = null;
+			for (ContactUrgent contact : contacts) {
+				StringBuffer sb = new StringBuffer();
+				sb.append("DELETE FROM REL_ADHERENT_CONTACT");
+				sb.append(" WHERE ADHERENT_LICENSE = ?");
+				sb.append(" AND CONTACT_URGENT_IDCONTACT = ?");
+				st = conex.prepareStatement(sb.toString());
+				st.setString(1, adh.getNumeroLicense());
+				st.setInt(2, contact.getId());
+				if (st.executeUpdate() == 0) {
+					throw new TechnicalException(Technical.GENERIC, "La relation contact :" + contact.getNom()
+							+ " adherent " + adh.getNom() + " n'a pu être supprimée");
+				} else {
+					// On supprime le contact
+					StringBuffer sb2 = new StringBuffer();
+					sb2.append("DELETE FROM CONTACT_URGENT");
+					sb2.append(" WHERE IDCONTACT = ?");
+					st = conex.prepareStatement(sb2.toString());
+					st.setInt(1, contact.getId());
+					if (st.executeUpdate() == 0) {
+						throw new TechnicalException(Technical.GENERIC, "La contact :" + contact.getNom() + ", "
+								+ contact.getPrenom() + "n'a pu être supprimé");
+					}
 
-
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new TechnicalException(Technical.GENERIC,e.getMessage());
-        } finally {
-            closeConnexion(conex);
-        }
-    }
-
-    public void updateContacts(List<ContactUrgent> contacts) throws TechnicalException {
-        Connection conex = null;
-        try {
-            for (ContactUrgent contact : contacts) {
-                conex = getDataSource().getConnection();
-                StringBuffer sb = new StringBuffer();
-                sb.append("UPDATE CONTACT_URGENT");
-                sb.append(" SET TITRE = ?,");
-                sb.append(" NOM = ?,");
-                sb.append(" PRENOM = ?,");
-                sb.append(" TELEPHONE = ?,");
-                sb.append(" TELEPHTWO = ?");
-                sb.append(" WHERE IDCONTACT = ?");
-
-                PreparedStatement st = conex.prepareStatement(sb.toString());
-                st.setString(1, contact.getTitre());
-                st.setString(2, contact.getNom());
-                st.setString(3, contact.getPrenom());
-                st.setString(4, contact.getTelephone());
-                st.setString(5, contact.getTelephtwo());
-                st.setInt(6, contact.getId());
-                if (st.executeUpdate() == 0) {
-                    throw new TechnicalException(Technical.GENERIC,
-                            "Le Contact id : " + contact.getId() + "n'a pu être mis à jour");
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new TechnicalException(Technical.GENERIC,e.getMessage());
-        } finally {
-            closeConnexion(conex);
-        }
-    }
-
-    public void deleteContacts(List<ContactUrgent> contacts, Adherent adh) throws TechnicalException {
-        Connection conex = null;
-        try {
-            conex = getDataSource().getConnection();
-            PreparedStatement st = null;
-            for (ContactUrgent contact : contacts) {
-                StringBuffer sb = new StringBuffer();
-                sb.append("DELETE FROM REL_ADHERENT_CONTACT");
-                sb.append(" WHERE ADHERENT_LICENSE = ?");
-                sb.append(" AND CONTACT_URGENT_IDCONTACT = ?");
-                st = conex.prepareStatement(sb.toString());
-                st.setString(1, adh.getNumeroLicense());
-                st.setInt(2, contact.getId());
-                if (st.executeUpdate() == 0) {
-                    throw new TechnicalException(Technical.GENERIC,
-                            "La relation contact :" + contact.getNom() + " adherent " + adh.getNom() + " n'a pu être supprimée");
-                } else {
-                    //On supprime le contact
-                    StringBuffer sb2 = new StringBuffer();
-                    sb2.append("DELETE FROM CONTACT_URGENT");
-                    sb2.append(" WHERE IDCONTACT = ?");
-                    st = conex.prepareStatement(sb2.toString());
-                    st.setInt(1, contact.getId());
-                    if (st.executeUpdate() == 0) {
-                        throw new TechnicalException(Technical.GENERIC,
-                                "La contact :" + contact.getNom() + ", " + contact.getPrenom() + "n'a pu être supprimé");
-                    }
-
-                }
-            }
-        } catch (SQLException e) {
-            LOGGER.error(e.getMessage(), e);
-            throw new TechnicalException(Technical.GENERIC,e.getMessage());
-        } finally {
-            closeConnexion(conex);
-        }
-    }
+				}
+			}
+		} catch (SQLException e) {
+			LOGGER.error(e.getMessage(), e);
+			throw new TechnicalException(Technical.GENERIC, e.getMessage());
+		} finally {
+			closeConnexion(conex);
+		}
+	}
 
 }

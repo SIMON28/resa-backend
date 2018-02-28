@@ -1,6 +1,7 @@
 package com.asptt.resa.commons.resource;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
+import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.context.annotation.Configuration;
 
 import com.asptt.resa.commons.resource.mapper.BadUsageMapper;
@@ -13,8 +14,8 @@ import com.asptt.resa.commons.resource.mapper.UnhandledMapper;
 
 @Configuration
 //@ApplicationPath("/api/0.4.1")
-public class JerseyConfiguration extends JerseyJaxbConfiguration  {
-//public class JerseyConfiguration extends ResourceConfig  {
+//public class JerseyConfiguration extends JerseyJaxbConfiguration  {
+public class JerseyConfiguration extends ResourceConfig  {
 
 	public JerseyConfiguration() {
 		super();

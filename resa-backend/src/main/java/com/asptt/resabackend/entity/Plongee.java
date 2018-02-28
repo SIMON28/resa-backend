@@ -2,14 +2,13 @@ package com.asptt.resabackend.entity;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+
 
 public class Plongee implements Serializable {
 
     private static final long serialVersionUID = -2548032640337298221L;
-
     private Integer id;
     private TypePlongee typePlongee;
     private NiveauAutonomie niveauMinimum;
@@ -20,10 +19,10 @@ public class Plongee implements Serializable {
     private Date datePlongee;
     private Date dateReservation;
     private Boolean ouvertureForcee;
-    private Adherent dp;
-    private Adherent pilote;
-    private List<Adherent> participants;
-    private List<Adherent> participantsEnAttente;
+    private String dp;
+    private String pilote;
+    private List<String> participants;
+    private List<String> participantsEnAttente;
 
     public Plongee() {
         niveauMinimum = NiveauAutonomie.BATM;
@@ -127,56 +126,56 @@ public class Plongee implements Serializable {
         this.ouvertureForcee = ouvertureForcee;
     }
 
-    public Adherent getDp() {
+    public String getDp() {
         return dp;
     }
 
-    public Adherent setDp() {
-        List<Adherent> participants = getParticipants();
-        List<Adherent> lesDPs = new ArrayList<>();
-        for (Adherent adherent : participants) {
-            if (adherent.isDp()) {
-                lesDPs.add(adherent);
-            }
-        }
-        Collections.sort(lesDPs, new AdherentComparatorDP());
-        if (lesDPs.size() > 0) {
-            this.dp = lesDPs.get(0);
-        }
-        return dp;
-    }
+//    public String setDp() {
+//        List<String> participants = getParticipants();
+//        List<Adherent> lesDPs = new ArrayList<>();
+//        for (String adherent : participants) {
+//            if (adherent.isDp()) {
+//                lesDPs.add(adherent);
+//            }
+//        }
+//        Collections.sort(lesDPs, new AdherentComparatorDP());
+//        if (lesDPs.size() > 0) {
+//            this.dp = lesDPs.get(0);
+//        }
+//        return dp;
+//    }
 
-    public void setDp(Adherent dp) {
+    public void setDp(String dp) {
         this.dp = dp;
     }
 
-    public Adherent getPilote() {
+    public String getPilote() {
         return pilote;
     }
 
-    public void setPilote(Adherent pilote) {
+    public void setPilote(String pilote) {
         this.pilote = pilote;
     }
 
-    public List<Adherent> getParticipants() {
+    public List<String> getParticipants() {
         if (null == participants) {
             return new ArrayList<>();
         }
         return participants;
     }
 
-    public void setParticipants(List<Adherent> participants) {
+    public void setParticipants(List<String> participants) {
         this.participants = participants;
     }
 
-    public List<Adherent> getParticipantsEnAttente() {
+    public List<String> getParticipantsEnAttente() {
         if (null == participantsEnAttente) {
             return new ArrayList<>();
         }
         return participantsEnAttente;
     }
 
-    public void setParticipantsEnAttente(List<Adherent> participantsEnAttente) {
+    public void setParticipantsEnAttente(List<String> participantsEnAttente) {
         this.participantsEnAttente = participantsEnAttente;
     }
 

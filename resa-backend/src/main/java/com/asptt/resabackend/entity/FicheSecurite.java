@@ -44,22 +44,22 @@ public class FicheSecurite implements Serializable {
         if (null == unePlongee.getDp()) {
             this.nomDP = "aucun";
         } else {
-            this.nomDP = unePlongee.getDp().getNom();
+//            this.nomDP = unePlongee.getDp().getNom();
         }
         if (null == unePlongee.getPilote()) {
             this.nomPilote = "aucun";
         } else {
-            this.nomPilote = unePlongee.getPilote().getNom();
+//            this.nomPilote = unePlongee.getPilote().getNom();
         }
         this.datePlongee = unePlongee.getDatePlongee();
         this.typePlongee = unePlongee.getTypePlongee();
         this.nbPlongeurs = unePlongee.getParticipants().size();
         List<Adherent> encadrants = new ArrayList<>();
-        for (Adherent plongeur : unePlongee.getParticipants()) {
-            if (plongeur.isEncadrent()) {
-                encadrants.add(plongeur);
-            }
-        }
+//        for (Adherent plongeur : unePlongee.getParticipants()) {
+//            if (plongeur.isEncadrent()) {
+//                encadrants.add(plongeur);
+//            }
+//        }
         this.nbEncadrants = encadrants.size();
     }
 

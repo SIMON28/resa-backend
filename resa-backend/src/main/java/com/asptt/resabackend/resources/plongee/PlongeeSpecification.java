@@ -1,43 +1,43 @@
-package com.asptt.resabackend.resources.adherent;
+package com.asptt.resabackend.resources.plongee;
 
 import com.asptt.resa.commons.json.JsonRepresentation;
 import com.asptt.resa.commons.json.MappingTable;
 import com.asptt.resa.commons.service.EditionPolicy;
 
-public class AdherentSpecification {
+public class PlongeeSpecification {
 
-	private static JsonRepresentation adherentLightView;
+	private static JsonRepresentation plongeeLightView;
 
-	private static JsonRepresentation adherentFullView;
+	private static JsonRepresentation plongeeFullView;
 
 	private static EditionPolicy editionPolicy;
 
 	private static MappingTable mappingTable;
 
-	private AdherentSpecification() {
+	private PlongeeSpecification() {
 	}
 
-	public static JsonRepresentation getAdherentLightView() {
-		if (adherentLightView == null) {
-			adherentLightView = new JsonRepresentation().add("numeroLicense").add("nom")
+	public static JsonRepresentation getPlongeeLightView() {
+		if (plongeeLightView == null) {
+			plongeeLightView = new JsonRepresentation().add("numeroLicense").add("nom")
 					.add("prenom").add("mail").add("niveau").add("telephone");
 		}
-		return adherentLightView;
+		return plongeeLightView;
 	}
 
-	public static JsonRepresentation getAdherentFullView() {
-		if (adherentFullView == null) {
-			adherentFullView = new JsonRepresentation().add(getAdherentLightView())
+	public static JsonRepresentation getPlongeeFullView() {
+		if (plongeeFullView == null) {
+			plongeeFullView = new JsonRepresentation().add(getPlongeeLightView())
 					.add("encadrement").add("aptitude").add("pilote").add("tiv").add("dp").
 					add("actif").add("password").add("commentaire").add("dateCM").add("anneeCotisation").add("roles").add("contacts");
 		}
-		return adherentFullView;
+		return plongeeFullView;
 	}
 
 	public static EditionPolicy getEditionPolicy() {
 		if (editionPolicy == null) {
-			editionPolicy = new EditionPolicy().auth("prenom")
-					.auth("nom").auth("license");
+			editionPolicy = new EditionPolicy().auth("firstName")
+					.auth("lastName").auth("room");
 		}
 		return editionPolicy;
 	}

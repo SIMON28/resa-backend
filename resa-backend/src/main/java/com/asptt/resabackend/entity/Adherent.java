@@ -5,8 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-//import org.apache.wicket.authorization.strategies.role.Roles;
-
+//@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Adherent implements Serializable {
 
 	private static final long serialVersionUID = -8569233748603210161L;
@@ -40,7 +39,7 @@ public class Adherent implements Serializable {
 	private String commentaire;
 	private Date dateCM;
 	private Integer anneeCotisation;
-	private List<ContactUrgent> contacts = null;
+	private List<String> contacts = null;
 
 	public String getPassword() {
 		return password;
@@ -395,14 +394,14 @@ public class Adherent implements Serializable {
 		this.anneeCotisation = anneeCotisation;
 	}
 
-	public List<ContactUrgent> getContacts() {
+	public List<String> getContacts() {
 		if (null == contacts) {
 			contacts = new ArrayList<>();
 		}
 		return contacts;
 	}
 
-	public void setContacts(List<ContactUrgent> contacts) {
+	public void setContacts(List<String> contacts) {
 		this.contacts = contacts;
 	}
 

@@ -1,4 +1,4 @@
-package com.asptt.resabackend.resources.adherent;
+package com.asptt.resabackend.resources.plongee;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -20,18 +20,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.asptt.resa.commons.annotation.PATCH;
 import com.asptt.resa.commons.resource.ResourceBase;
 //import com.asptt.resabackend.commons.resource.ResourceBaseResa;
-import com.asptt.resabackend.entity.Adherent;
+import com.asptt.resabackend.entity.Plongee;
 import com.fasterxml.jackson.databind.JsonNode;
 
-@Path("adherent")
-@Component("adherentResource")
-public class AdherentResourceImpl extends ResourceBase<Adherent> {
+@Path("plongee")
+@Component("plongeeResource")
+public class PlongeeResourceImpl extends ResourceBase<Plongee> {
 
 	@Autowired
-	private AdherentService service;
+	private PlongeeService service;
 
 	@Override
-	protected AdherentService getService() {
+	protected PlongeeService getService() {
 		return this.service;
 	}
 	
@@ -40,7 +40,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> {
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
 	public Response create(final @Context UriInfo uriInfo,
-			final @RequestBody Adherent resource) {
+			final @RequestBody Plongee resource) {
 		return super.create(uriInfo, resource);
 	}
 
@@ -50,17 +50,15 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> {
 	@Override
 	public Response get(final @Context UriInfo uriInfo,
 			final @PathParam("id") String id) {
-		Response resp = super.get(uriInfo, id); 
-		return resp;
+		return super.get(uriInfo, id);
 	}
 
 	@GET
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
 	public Response find(final @Context UriInfo uriInfo) {
-//		return super.find(uriInfo, AdherentSpecification.getAdherentLightView());
-//		return super.find(uriInfo, AdherentSpecification.getAdherentFullView());
-		return super.find(uriInfo);
+//		return super.find(uriInfo, PlongeeSpecification.getPlongeeLightView());
+		return super.find(uriInfo, PlongeeSpecification.getPlongeeFullView());
 	}
 
 	 /* update full */
@@ -71,7 +69,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> {
 	 @Override
 	 public Response update(final @Context UriInfo uriInfo,
 	 final @PathParam("id") String id,
-	 final @RequestBody Adherent resource) {
+	 final @RequestBody Plongee resource) {
 	 return super.update(uriInfo, id, resource);
 	 }
 
@@ -85,7 +83,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> {
 //			final @PathParam("id") String id,
 //			final @RequestBody JsonNode partialResource) {
 //		return super.merge(uriInfo, id, partialResource,
-//				AdherentSpecification.getAdherentFullView());
+//				PlongeeSpecification.getPlongeeFullView());
 //	}
 
 	@DELETE
@@ -118,7 +116,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> {
 			final @PathParam("id") String id,
 			final @RequestBody JsonNode jsonPatch) {
 		return super.patch(uriInfo, id, jsonPatch,
-				AdherentSpecification.getAdherentFullView());
+				PlongeeSpecification.getPlongeeFullView());
 	}
 
 }

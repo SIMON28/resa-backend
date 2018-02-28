@@ -14,7 +14,6 @@ public class ContactUrgent implements Serializable {
 
 	public ContactUrgent() {
 		super();
-		// TODO Auto-generated constructor stub
 	}
 
 	private static final long serialVersionUID = -8569233748603210161L;
