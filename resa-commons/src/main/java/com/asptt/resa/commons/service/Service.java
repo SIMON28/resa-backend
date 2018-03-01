@@ -7,7 +7,7 @@ import javax.ws.rs.core.MultivaluedMap;
 /**
  *
  */
-public interface Service<R> {
+public interface Service<R, S> {
 
 	String getId(R resource);
 	
@@ -24,5 +24,7 @@ public interface Service<R> {
 	R update(R resource);
 
 	void delete(String id);
+
+	List<S> findSousResource(String id);
 
 }

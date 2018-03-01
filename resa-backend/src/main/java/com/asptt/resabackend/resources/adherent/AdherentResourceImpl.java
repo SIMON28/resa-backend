@@ -21,11 +21,12 @@ import com.asptt.resa.commons.annotation.PATCH;
 import com.asptt.resa.commons.resource.ResourceBase;
 //import com.asptt.resabackend.commons.resource.ResourceBaseResa;
 import com.asptt.resabackend.entity.Adherent;
+import com.asptt.resabackend.entity.ContactUrgent;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @Path("adherent")
 @Component("adherentResource")
-public class AdherentResourceImpl extends ResourceBase<Adherent> {
+public class AdherentResourceImpl extends ResourceBase<Adherent, ContactUrgent> {
 
 	@Autowired
 	private AdherentService service;
@@ -59,8 +60,8 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> {
 	@Override
 	public Response find(final @Context UriInfo uriInfo) {
 //		return super.find(uriInfo, AdherentSpecification.getAdherentLightView());
-//		return super.find(uriInfo, AdherentSpecification.getAdherentFullView());
-		return super.find(uriInfo);
+		return super.find(uriInfo, AdherentSpecification.getAdherentFullView());
+//		return super.find(uriInfo);
 	}
 
 	 /* update full */
@@ -119,6 +120,14 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> {
 			final @RequestBody JsonNode jsonPatch) {
 		return super.patch(uriInfo, id, jsonPatch,
 				AdherentSpecification.getAdherentFullView());
+	}
+
+	@GET
+	@Path("{adherentId}/contact")
+	@Produces({ MediaType.APPLICATION_JSON })
+	public Response findContactUrgent(final @Context UriInfo uriInfo,
+			final @PathParam("adherentId") String adherentId) {
+		return super.getSousResource(adherentId,ContactUrgentSpecification.getContactUrgentFullView());
 	}
 
 }

@@ -12,9 +12,10 @@ import javax.ws.rs.core.MultivaluedMap;
 import com.asptt.resa.commons.dao.Dao;
 
 /**
+ * @param <S>
  *
  */
-public abstract class ServiceBase<R> implements Service<R> {
+public abstract class ServiceBase<R, S> implements Service<R,S> {
 
 	protected abstract Dao<R> getDao();
 

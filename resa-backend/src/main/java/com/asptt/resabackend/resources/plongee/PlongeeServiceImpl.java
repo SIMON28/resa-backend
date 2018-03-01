@@ -1,5 +1,7 @@
 package com.asptt.resabackend.resources.plongee;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +15,7 @@ import com.asptt.resabackend.entity.Plongee;
 import com.asptt.resabackend.resources.adherent.AdherentServiceImpl;
 
 @Service("plongeeService")
-public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeService {
+public class PlongeeServiceImpl extends ServiceBase<Plongee, Object> implements PlongeeService {
 
 	@Autowired
 	private Dao<Plongee> plongeeDao;
@@ -54,6 +56,12 @@ public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeS
 			throw new NotFoundException(NotFound.GENERIC, "id plongee [" + id + "] n'existe pas");
 		}
 		return plongee;
+	}
+
+	@Override
+	public List<Object> findSousResource(String id) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

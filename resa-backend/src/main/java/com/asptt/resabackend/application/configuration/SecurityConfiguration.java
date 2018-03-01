@@ -26,11 +26,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 				.anyRequest().authenticated()
 				.and()
 			.httpBasic();
-			
+		http.csrf().disable();
 		
 //        http.authorizeRequests().anyRequest().fullyAuthenticated();
 //        http.httpBasic().authenticationEntryPoint(authEntryPoint);
-//		http.csrf().disable();
 
 //		http.csrf().disable().authorizeRequests() .anyRequest().authenticated() .and().httpBasic() .authenticationEntryPoint(authEntryPoint);
 	}

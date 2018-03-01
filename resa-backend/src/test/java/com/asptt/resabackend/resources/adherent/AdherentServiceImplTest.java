@@ -13,29 +13,31 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.asptt.resa.commons.dao.Dao;
+import com.asptt.resa.commons.exception.FunctionalException;
 import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.TechnicalException;
+import com.asptt.resa.commons.service.Service;
 import com.asptt.resabackend.ApplicationTest;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.Adherent.Roles;
+import com.asptt.resabackend.entity.ContactUrgent;
 import com.asptt.resabackend.entity.NiveauAutonomie;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration (classes=ApplicationTest.class)
 @ActiveProfiles(profiles = "test")
-public class AdherentDaoImplTest {
+public class AdherentServiceImplTest {
 	
 	private static final org.slf4j.Logger LOGGER = LoggerFactory
-			.getLogger(AdherentDaoImplTest.class);
+			.getLogger(AdherentServiceImplTest.class);
 
 
 	@Autowired
-	private Dao<Adherent> adherentDao;
+	private Service<Adherent, ContactUrgent> adherentService;
 		
 	@Test
 	public void getAdherentById() {
-		Adherent adh = adherentDao.get("096042");
+		Adherent adh = adherentService.get("096042");
 		LOGGER.info("ok pour getAdherentById");
 		Assert.assertEquals(adh.getNumeroLicense(), "096042");
 	}
@@ -43,15 +45,14 @@ public class AdherentDaoImplTest {
 	@Test
 	public void getAdherentByUnknownId() {
 		try {
-		Adherent adh = adherentDao.get("9lpm25");
-		LOGGER.info("Adherent non trouve");
-		Assert.assertEquals(null, adh);
+		adherentService.get("9lpm25");
 		} catch(NotFoundException e) {
+			LOGGER.info("Adherent non trouve");
 			Assert.assertEquals("404-0", e.getCategory()+"-"+e.getCode().getCode());
 		}
 	}
 
-//	@Test
+	@Test
 	public void testCreate() {
 		Adherent adh = new Adherent();
 		adh.setNumeroLicense("unnumero");
@@ -75,16 +76,18 @@ public class AdherentDaoImplTest {
 		adh.setRoles(l_roles);
 		
 		try {
-			Adherent newUpdated = adherentDao.create(adh);
+			Adherent newUpdated = adherentService.create(adh);
 			Assert.assertEquals("TESTCREATE", newUpdated.getNom());
 			Assert.assertEquals(adh, newUpdated);
 			LOGGER.info("On a bien une creation");
 		} catch (TechnicalException e) {
 			LOGGER.debug("creation d'un adherent plantée"+e.getMessage());
+		} catch (FunctionalException f) {
+			Assert.assertEquals("Creation Impossible, l'adherent avec le numero de license [unnumero] existe déjà", f.getMessage());
 		}
 	}
 
-	@Test
+//	@Test
 	public void testUpdate() {
 		Adherent adh = new Adherent();
 		adh.setNumeroLicense("999998");
@@ -111,7 +114,7 @@ public class AdherentDaoImplTest {
 		adh.setContacts(contacts);
 		
 		try {
-			Adherent adhUpdated = adherentDao.update(adh);
+			Adherent adhUpdated = adherentService.update(adh);
 			Assert.assertEquals("toto", adhUpdated.getPrenom());
 			Assert.assertEquals(adh, adhUpdated);
 			LOGGER.info("On a bien une mise à jour");

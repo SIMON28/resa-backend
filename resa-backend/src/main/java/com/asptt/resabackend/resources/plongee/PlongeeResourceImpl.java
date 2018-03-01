@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 @Path("plongee")
 @Component("plongeeResource")
-public class PlongeeResourceImpl extends ResourceBase<Plongee> {
+public class PlongeeResourceImpl extends ResourceBase<Plongee, Object> {
 
 	@Autowired
 	private PlongeeService service;

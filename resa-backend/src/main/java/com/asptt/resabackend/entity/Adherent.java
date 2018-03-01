@@ -151,7 +151,7 @@ public class Adherent implements Serializable {
 	}
 
 	public void setEnumNiveau(NiveauAutonomie niveau) {
-		if (niveau.equals(niveau.P5)) {
+		if (niveau.equals(NiveauAutonomie.P5)) {
 			setDp(true);
 		}
 		this.niveau = niveau;

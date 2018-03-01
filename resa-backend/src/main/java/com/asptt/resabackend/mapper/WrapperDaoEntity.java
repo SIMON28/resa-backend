@@ -5,19 +5,16 @@ import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 
-import org.springframework.stereotype.Service;
-
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.Adherent.Encadrement;
 import com.asptt.resabackend.entity.Aptitude;
+import com.asptt.resabackend.entity.ContactUrgent;
 import com.asptt.resabackend.entity.NiveauAutonomie;
 
-@Service
-public class WrapperDaoEntity {
+public final class WrapperDaoEntity {
 
-	@SuppressWarnings("unused")
-	private Adherent wrapAdherent(ResultSet rs, List<String>roles, List<String> contactUrgents) throws SQLException, TechnicalException {
+	public static Adherent wrapAdherent(ResultSet rs, List<String>roles, List<String> contactUrgents) throws SQLException, TechnicalException {
 		String licence = rs.getString("LICENSE");
 		String nom = rs.getString("NOM");
 		String prenom = rs.getString("PRENOM");
@@ -66,6 +63,25 @@ public class WrapperDaoEntity {
 		adherent.setEnumAptitude(aptitude);
 		return adherent;
 
+	}
+
+	public static ContactUrgent wrapContact(ResultSet rs) throws SQLException, TechnicalException {
+		int id = rs.getInt("idCONTACT");
+		String titre = rs.getString("TITRE");
+		String nom = rs.getString("NOM");
+		String prenom = rs.getString("PRENOM");
+		String telephone = rs.getString("TELEPHONE");
+		String mail = rs.getString("TELEPHTWO");
+
+		ContactUrgent contact = new ContactUrgent();
+		contact.setId(id);
+		contact.setTitre(titre);
+		contact.setNom(nom);
+		contact.setPrenom(prenom);
+		contact.setTelephone(telephone);
+		contact.setTelephtwo(mail);
+
+		return contact;
 	}
 
 }
