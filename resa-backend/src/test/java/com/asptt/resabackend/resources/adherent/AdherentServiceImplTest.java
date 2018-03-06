@@ -16,7 +16,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import com.asptt.resa.commons.exception.FunctionalException;
 import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.TechnicalException;
-import com.asptt.resa.commons.service.Service;
 import com.asptt.resabackend.ApplicationTest;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.Adherent.Roles;
@@ -33,7 +32,7 @@ public class AdherentServiceImplTest {
 
 
 	@Autowired
-	private Service<Adherent, ContactUrgent> adherentService;
+	private AdherentService adherentService;
 		
 	@Test
 	public void getAdherentById() {
@@ -53,7 +52,7 @@ public class AdherentServiceImplTest {
 	}
 
 	@Test
-	public void testCreate() {
+	public void create() {
 		Adherent adh = new Adherent();
 		adh.setNumeroLicense("unnumero");
 		adh.setNiveau(NiveauAutonomie.BATM.name());
@@ -88,7 +87,7 @@ public class AdherentServiceImplTest {
 	}
 
 //	@Test
-	public void testUpdate() {
+	public void update() {
 		Adherent adh = new Adherent();
 		adh.setNumeroLicense("999998");
 		adh.setNiveau(NiveauAutonomie.BATM.name());
@@ -122,4 +121,23 @@ public class AdherentServiceImplTest {
 			LOGGER.debug("mise à jour d'un adherent plantée"+e.getMessage());
 		}
 	}
+	
+	@Test
+	public void getContactUrgent() {
+		List<ContactUrgent> contact = adherentService.findContacts("096042");
+		Assert.assertEquals("DEFURNE", contact.get(0).getNom());
+	}
+
+	@Test
+	public void createContactUrgent() {
+		List<ContactUrgent> contacts = adherentService.findContacts("096042");
+		List<ContactUrgent> contactCreated = adherentService.createContacts("unnumero", contacts);
+		Assert.assertEquals(contacts, contactCreated);
+	}
+
+	@Test
+	public void deleteContactUrgent() {
+		adherentService.deleteContacts("unnumero");
+	}
+
 }

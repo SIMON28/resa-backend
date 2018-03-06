@@ -1,13 +1,11 @@
 package com.asptt.resabackend.resources.adherent;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.asptt.resa.commons.dao.Dao;
 import com.asptt.resa.commons.exception.Functional;
 import com.asptt.resa.commons.exception.FunctionalException;
 import com.asptt.resa.commons.exception.NotFound;
@@ -15,18 +13,19 @@ import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.service.ServiceBase;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.ContactUrgent;
+import com.asptt.resabackend.resources.contacturgent.ContactService;
 
 @Service("adherentService")
-public class AdherentServiceImpl extends ServiceBase<Adherent, ContactUrgent> implements AdherentService {
+public class AdherentServiceImpl extends ServiceBase<Adherent> implements AdherentService {
 
 	@Autowired
-	private Dao<Adherent> adherentDao;
+	private AdherentDaoImpl adherentDao;
 
 	@Autowired
-	private Dao<ContactUrgent> contactUrgentDao;
+	private ContactService contactService;
 
 	@Override
-	protected Dao<Adherent> getDao() {
+	protected AdherentDaoImpl getDao() {
 		return this.adherentDao;
 	}
 
@@ -68,14 +67,21 @@ public class AdherentServiceImpl extends ServiceBase<Adherent, ContactUrgent> im
 	}
 
 	@Override
-	public List<ContactUrgent> findSousResource(String resouceId) {
-		Adherent adh = this.getDao().get(resouceId);
-		List<String> contacts = adh.getContacts();
-		List<ContactUrgent> contactUrgents = new ArrayList<>();
-		for (String contactId : contacts) {
-			contactUrgents.add(contactUrgentDao.get(contactId));
-		}
-		return contactUrgents;
+	public List<ContactUrgent> findContacts(String adherentId) {
+		return contactService.findContactsForAdherent(adherentId);
 	}
 
+	@Override
+	public List<ContactUrgent> createContacts(String adherentId,List<ContactUrgent> resources) {
+		Adherent adh = this.get(adherentId);
+		return contactService.createContactsForAdherent(resources, adherentId);
+	}
+
+	@Override
+	public void deleteContacts(String adherentId) {
+		
+		contactService.deleteContactsForAdherent(adherentId);
+	}
+
+	
 }

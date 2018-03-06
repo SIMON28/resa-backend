@@ -19,8 +19,8 @@ public class PlongeeSpecification {
 
 	public static JsonRepresentation getPlongeeLightView() {
 		if (plongeeLightView == null) {
-			plongeeLightView = new JsonRepresentation().add("numeroLicense").add("nom")
-					.add("prenom").add("mail").add("niveau").add("telephone");
+			plongeeLightView = new JsonRepresentation().add("id").add("typePlongee")
+					.add("niveauMinimum").add("nbMaxPlaces").add("datePlongee").add("dateReservation");
 		}
 		return plongeeLightView;
 	}
@@ -28,8 +28,8 @@ public class PlongeeSpecification {
 	public static JsonRepresentation getPlongeeFullView() {
 		if (plongeeFullView == null) {
 			plongeeFullView = new JsonRepresentation().add(getPlongeeLightView())
-					.add("encadrement").add("aptitude").add("pilote").add("tiv").add("dp").
-					add("actif").add("password").add("commentaire").add("dateCM").add("anneeCotisation").add("roles").add("contacts");
+					.add("niveauDP").add("lieux").add("pilote").add("dp").add("ouvertureForcee").
+					add("participants").add("participantsEnAttente");
 		}
 		return plongeeFullView;
 	}

@@ -15,7 +15,7 @@ import com.asptt.resa.commons.dao.Dao;
  * @param <S>
  *
  */
-public abstract class ServiceBase<R, S> implements Service<R,S> {
+public abstract class ServiceBase<R> implements Service<R> {
 
 	protected abstract Dao<R> getDao();
 

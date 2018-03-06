@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.JsonNode;
  *
  * @param <R>
  */
-public interface Resource<R, S> {
+public interface Resource<R> {
 
 	public Response create(UriInfo uriInfo, R resource);
 

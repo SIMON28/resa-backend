@@ -1,10 +1,10 @@
-package com.asptt.resabackend.resources.adherent;
+package com.asptt.resabackend.resources.contacturgent;
 
 import com.asptt.resa.commons.json.JsonRepresentation;
 import com.asptt.resa.commons.json.MappingTable;
 import com.asptt.resa.commons.service.EditionPolicy;
 
-public class ContactUrgentSpecification {
+public class ContactSpecification {
 
 	private static JsonRepresentation cuLightView;
 
@@ -14,7 +14,7 @@ public class ContactUrgentSpecification {
 
 	private static MappingTable mappingTable;
 
-	private ContactUrgentSpecification() {
+	private ContactSpecification() {
 	}
 
 	public static JsonRepresentation getContactUrgentLightView() {

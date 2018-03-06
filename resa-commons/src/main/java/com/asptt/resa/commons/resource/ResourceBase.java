@@ -8,7 +8,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.URI;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,11 +39,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  *
  * @param <R>
  */
-public abstract class ResourceBase<R extends Object, S extends Object> implements Resource<R, S> {
+public abstract class ResourceBase<R extends Object> implements Resource<R> {
 
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ResourceBase.class);
 
-	protected abstract Service<R, S> getService();
+	protected abstract Service<R> getService();
 
 	// Override if necessary
 	protected MappingTable getMappingTable() {
@@ -474,17 +473,4 @@ public abstract class ResourceBase<R extends Object, S extends Object> implement
 		}
 	}
 
-	public Response getSousResource(String id, final JsonRepresentation jsonRepresentation) {
-		// Get entity
-		List<S> resources = this.getService().findSousResource(id);
-		Set<Object> set = new HashSet<>();
-		for(S res : resources) {
-			set.add(res);
-		}
-
-		// Get representation
-		final Object entity = this.getEntities(set, jsonRepresentation);
-
-		return Response.ok(entity).build();
-	}
 }
