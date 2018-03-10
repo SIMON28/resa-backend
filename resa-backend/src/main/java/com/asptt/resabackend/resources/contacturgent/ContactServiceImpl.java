@@ -16,10 +16,10 @@ import com.asptt.resabackend.entity.ContactUrgent;
 public class ContactServiceImpl extends ServiceBase<ContactUrgent> implements ContactService {
 
 	@Autowired
-	private ContactDaoImp contactDao;
+	private ContactDao contactDao;
 
 	@Override
-	protected ContactDaoImp getDao() {
+	protected ContactDao getDao() {
 		return this.contactDao;
 	}
 

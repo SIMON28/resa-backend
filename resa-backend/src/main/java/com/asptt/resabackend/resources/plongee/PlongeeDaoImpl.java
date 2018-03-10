@@ -2,56 +2,63 @@ package com.asptt.resabackend.resources.plongee;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import javax.sql.DataSource;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import com.asptt.resa.commons.dao.Dao;
+import com.asptt.resa.commons.exception.Functional;
+import com.asptt.resa.commons.exception.FunctionalException;
+import com.asptt.resa.commons.exception.NotFound;
+import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.Technical;
 import com.asptt.resa.commons.exception.TechnicalException;
-import com.asptt.resabackend.entity.NiveauAutonomie;
 import com.asptt.resabackend.entity.Plongee;
-import com.asptt.resabackend.entity.TypePlongee;
+import com.asptt.resabackend.mapper.PlongeeRowMapper;
+import com.asptt.resabackend.mapper.SqlSearchCriteria;
+import com.asptt.resabackend.resources.NomResources;
+import com.asptt.resabackend.util.ResaUtil;
 
 @Repository("plongeeDao")
-public class PlongeeDaoImpl implements Dao<Plongee> {
+public class PlongeeDaoImpl implements PlongeeDao {
 
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(PlongeeDaoImpl.class);
+	@Autowired
+	private Environment env;
 
 	@Autowired
-	private DataSource dataSource;
+	private JdbcTemplate jdbcTemplate;;
 
-	public DataSource getDataSource() {
-		return dataSource;
-	}
-
-	public void setDataSource(DataSource dataSource) {
-		this.dataSource = dataSource;
-	}
-
-	public void closeConnexion(Connection connexion) {
-		try {
-			if (null != connexion) {
-				connexion.close();
-			}
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, "Impossible de cloturer la connexion");
-		}
-		connexion = null;
-	}
-
+//	@Autowired
+//	private DataSource dataSource;
+//
+//	public DataSource getDataSource() {
+//		return dataSource;
+//	}
+//
+//	public void setDataSource(DataSource dataSource) {
+//		this.dataSource = dataSource;
+//	}
+//
+//	public void closeConnexion(Connection connexion) {
+//		try {
+//			if (null != connexion) {
+//				connexion.close();
+//			}
+//		} catch (SQLException e) {
+//			throw new TechnicalException(Technical.GENERIC, "Impossible de cloturer la connexion");
+//		}
+//		connexion = null;
+//	}
+//
 	@Override
 	public Plongee create(Plongee resource) {
 		// TODO Auto-generated method stub
@@ -60,217 +67,82 @@ public class PlongeeDaoImpl implements Dao<Plongee> {
 
 	@Override
 	public Plongee get(String id) {
-		Connection conex = null;
+		Plongee plongee = null;
 		try {
-			conex = getDataSource().getConnection();
-			PreparedStatement st = conex.prepareStatement("select * from PLONGEE where idPLONGEES = ? ");
-			st.setString(1, id);
-			ResultSet rs = st.executeQuery();
-			Plongee plongee = null;
-			if (rs.next()) {
-				plongee = wrapPlongee(rs);
-			}
+			plongee = jdbcTemplate.queryForObject("select * from PLONGEE where idPLONGEES = ?",
+					new PlongeeRowMapper(), id);
+			plongee.setParticipants(getAdherentsInscrits(new Integer(id), null, null, null));
+			plongee.setParticipantsEnAttente(getAdherentsWaiting(new Integer(id)));
 			return plongee;
-		} catch (SQLException e) {
-			// log.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "Aucune plongée avec l'id [" + id + "]");
 		}
 
 	}
 
 	@Override
 	public List<Plongee> find() {
-		Connection conex = null;
+		String limit = env.getProperty("plongee.limit");
+		String sql = "select * from PLONGEE order by DATE_PLONGEE desc LIMIT " + limit;
+		List<Plongee> plongees = new ArrayList<>();
 		try {
-			conex = getDataSource().getConnection();
-			PreparedStatement st = conex.prepareStatement("select * from PLONGEE order by DATE_PLONGEE");
-			ResultSet rs = st.executeQuery();
-			List<Plongee> plongees = new ArrayList<>();
-			while (rs.next()) {
-				Plongee plongee = wrapPlongee(rs);
-				plongees.add(plongee);
+			LOGGER.info("requete SQL:" + sql);
+			plongees = jdbcTemplate.query(sql, new PlongeeRowMapper());
+			// population des participants + attente
+			for (Plongee plongee : plongees) {
+				plongee.setParticipants(getAdherentsInscrits(plongee.getId(), null, null, null));
+				plongee.setParticipantsEnAttente(getAdherentsWaiting(plongee.getId()));
 			}
 			return plongees;
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
-		}
-
-	}
-
-	public Integer findCount(MultivaluedMap<String, String> criteria) {
-
-		Connection conex = null;
-		try {
-			PreparedStatement st;
-			conex = getDataSource().getConnection();
-
-			StringBuffer sb = new StringBuffer("select count(*) from PLONGEE p");
-			if (criteria.isEmpty()) {
-				st = conex.prepareStatement(sb.toString());
-			} else {
-				int num = 0;
-				int limit = 0;
-				int offset = 0;
-				int nbParam = 0;
-				Map<Integer, List<String>> parameters = new HashMap<>();
-				// boucle pour constistuer la liste des parametres en supprimant la limit, offset
-				// et en attribuant un numero d'ordre pour le PreparedStatement 'st'
-				for (Map.Entry<String, List<String>> entry : criteria.entrySet()) {
-					LOGGER.debug("Index=" + num + "Key : " + entry.getKey() + " Value : " + entry.getValue());
-					if (entry.getKey().equals("limit") || entry.getKey().equals("offset")) {
-						if (entry.getKey().equals("limit")) {
-							limit = Integer.parseInt(entry.getValue().get(0));
-							LOGGER.info("On a trouve limit  =" + entry.getValue().get(0));
-						}
-						if (entry.getKey().equals("offset")) {
-							LOGGER.info("On a trouve offset  =" + entry.getValue().get(0));
-						}
-					} else {
-						num = num + 1;
-						List<String> ent = new ArrayList<>();
-						ent.add(entry.getKey());
-						ent.add(entry.getValue().get(0));
-						parameters.put(Integer.valueOf(num), ent);
-					}
-				}
-				nbParam = parameters.size();
-				if (nbParam > 0) {
-					sb.append(" where ");
-					// boucle pour constituer la clause where
-					parameters.entrySet().stream().forEach(entry -> {
-						sb.append(" " + entry.getValue().get(0) + " LIKE ? AND ");
-					});
-					sb.delete(sb.length() - 5, sb.length() - 1);
-//					sb.append(" order by DATE_PLONGEE desc");
-//					sb.append(" LIMIT ?, ?");
-					st = conex.prepareStatement(sb.toString());
-					//boucle pour populer le preparedStatement 'st'
-					for (Map.Entry<Integer, List<String>> entry : parameters.entrySet()) {
-						try {
-							st.setString(entry.getKey(), entry.getValue().get(1));
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-//					st.setInt(nbParam + 1, offset);
-//					st.setInt(nbParam + 2, limit);
-				} else {
-//					sb.append(" order by DATE_PLONGEE desc");
-//					sb.append(" LIMIT ?, ?");
-					st = conex.prepareStatement(sb.toString());
-//					st.setInt(nbParam + 1, offset);
-//					st.setInt(nbParam + 2, limit);
-				}
-				LOGGER.info("Nombre de parameres de la requte hors limit et offset =" + nbParam);
-				LOGGER.info("position limit" + (nbParam + 1) + "position offset = " + (nbParam + 2));
-			}
-			LOGGER.info("Requete SQL findCount avec critera=" + st.toString());
-			ResultSet rs = st.executeQuery();
-			Integer count = 0;
-			while (rs.next()) {
-				count = Integer.valueOf(rs.getInt("count(*)"));
-			}
-			return count;
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "PB Avec le find() plongee [" + e.getMessage() + "]");
 		}
 	}
 
 	@Override
-	public List<Plongee> find(MultivaluedMap<String, String> criteria) {
-
-		Connection conex = null;
+	public Integer findCount(MultivaluedMap<String, String> criteria) {
+		StringBuffer sql = new StringBuffer("select count(*) from PLONGEE p ");
+		SqlSearchCriteria param = ResaUtil.createSqlParameters(criteria, true, NomResources.PLONGEE);
+		Integer count;
 		try {
-			PreparedStatement st;
-			conex = getDataSource().getConnection();
-			int limit = 10;
-			int offset = 0;
-			int nbParam = 0;
-			StringBuffer sb = new StringBuffer("select * from PLONGEE p");
-			if (criteria.isEmpty()) {
-				st = conex.prepareStatement(sb.toString());
+			if (param.getNbParam() > 0) {
+				sql.append(param.getSql());
+				LOGGER.info("NbParam:" + param.getNbParam() + "SQL:" + sql.toString() + " taille args ["
+						+ param.getArgs().length + "]");
+				for (int i = 0; i < param.getArgs().length; i++) {
+					LOGGER.info("arg" + i + " = [" + param.getArgs()[i] + "]");
+				}
+				count = jdbcTemplate.queryForObject(sql.toString(), param.getArgs(), Integer.class);
 			} else {
-				int num = 0;
-//				int limit = 0;
-//				int offset = 0;
-//				int nbParam = 0;
-				Map<Integer, List<String>> parameters = new HashMap<>();
-				// boucle pour constistuer la liste des parametres en supprimant la limit, offset ou count
-				// et en attribuant un numero d'ordre pour le PreparedStatement 'st'
-				for (Map.Entry<String, List<String>> entry : criteria.entrySet()) {
-					LOGGER.debug("Index=" + num + "Key : " + entry.getKey() + " Value : " + entry.getValue());
-					if (entry.getKey().equals("limit") || entry.getKey().equals("offset")) {
-						if (entry.getKey().equals("limit")) {
-							limit = Integer.parseInt(entry.getValue().get(0));
-							LOGGER.info("On a trouve limit  =" + entry.getValue().get(0));
-						}
-						if (entry.getKey().equals("offset")) {
-							LOGGER.info("On a trouve offset  =" + entry.getValue().get(0));
-						}
-					} else {
-						num = num + 1;
-						List<String> ent = new ArrayList<>();
-						ent.add(entry.getKey());
-						ent.add(entry.getValue().get(0));
-						parameters.put(Integer.valueOf(num), ent);
-					}
-				}
-				nbParam = parameters.size();
-				if (nbParam > 0) {
-					sb.append(" where ");
-					// boucle pour constituer la clause where
-					parameters.entrySet().stream().forEach(entry -> {
-						sb.append(" " + entry.getValue().get(0) + " LIKE ? AND ");
-					});
-					sb.delete(sb.length() - 5, sb.length() - 1);
-//					sb.append(" order by DATE_PLONGEE desc");
-//					sb.append(" LIMIT ?, ?");
-					st = conex.prepareStatement(sb.toString());
-					//boucle pour populer le preparedStatement 'st'
-					for (Map.Entry<Integer, List<String>> entry : parameters.entrySet()) {
-						try {
-							st.setString(entry.getKey(), entry.getValue().get(1));
-						} catch (SQLException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-					}
-//					st.setInt(nbParam + 1, offset);
-//					st.setInt(nbParam + 2, limit);
-				} else {
-//					sb.append(" order by DATE_PLONGEE desc");
-//					sb.append(" LIMIT ?, ?");
-//					st = conex.prepareStatement(sb.toString());
-//					st.setInt(nbParam + 1, offset);
-//					st.setInt(nbParam + 2, limit);
-				}
-				LOGGER.info("Nombre de parameres de la requte hors limit et offset =" + nbParam);
-				LOGGER.info("position limit" + (nbParam + 1) + "position offset = " + (nbParam + 2));
+				LOGGER.info("FindCount() sans parametre SQL:" + sql.toString());
+				count = jdbcTemplate.queryForObject(sql.toString(), Integer.class);
 			}
-			sb.append(" order by DATE_PLONGEE desc");
-			sb.append(" LIMIT ?, ?");
-			st = conex.prepareStatement(sb.toString());
-			st.setInt(nbParam + 1, offset);
-			st.setInt(nbParam + 2, limit);
-			LOGGER.info("Requete SQL Find avec critera=" + st.toString());
-			ResultSet rs = st.executeQuery();
-			List<Plongee> plongees = new ArrayList<>();
-			while (rs.next()) {
-				Plongee plongee = wrapPlongee(rs);
-				plongees.add(plongee);
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "PB Avec le findCount()  [" + e.getMessage() + "]");
+		}
+		LOGGER.info("Trouver [" + count + "] enreg pour sql:" + sql.toString());
+		return count;
+	}
+
+	@Override
+	public List<Plongee> find(MultivaluedMap<String, String> criteria) {
+		StringBuffer sql = new StringBuffer("select * from PLONGEE p");
+		SqlSearchCriteria param = ResaUtil.createSqlParameters(criteria, false, NomResources.PLONGEE);
+		List<Plongee> plongees = new ArrayList<>();
+		try {
+			if (param.getNbParam() > 0) {
+				sql.append(param.getSql());
+			}
+			LOGGER.info("requete SQL:" + sql.toString());
+			plongees = jdbcTemplate.query(sql.toString(), param.getArgs(), new PlongeeRowMapper());
+			// population des participants + attente
+			for (Plongee plongee : plongees) {
+				plongee.setParticipants(getAdherentsInscrits(plongee.getId(), null, null, null));
+				plongee.setParticipantsEnAttente(getAdherentsWaiting(plongee.getId()));
 			}
 			return plongees;
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "PB Avec le find() plongee [" + e.getMessage() + "]");
 		}
 	}
 
@@ -278,7 +150,7 @@ public class PlongeeDaoImpl implements Dao<Plongee> {
 	public Plongee update(Plongee resource) {
 		Connection conex = null;
 		try {
-			conex = getDataSource().getConnection();
+//			conex = getDataSource().getConnection();
 			StringBuffer sb = new StringBuffer();
 			sb.append("UPDATE ADHERENT");
 			sb.append(" SET NIVEAU = ?,");
@@ -370,7 +242,7 @@ public class PlongeeDaoImpl implements Dao<Plongee> {
 			LOGGER.error(e.getMessage(), e);
 			throw new TechnicalException(Technical.GENERIC, e.getMessage());
 		} finally {
-			closeConnexion(conex);
+//			closeConnexion(conex);
 		}
 	}
 
@@ -380,139 +252,169 @@ public class PlongeeDaoImpl implements Dao<Plongee> {
 
 	}
 
-	private Plongee wrapPlongee(ResultSet rs) throws SQLException, TechnicalException {
-		int id = rs.getInt("idPLONGEES");
-		Date datePlongee = rs.getTimestamp("DATE_PLONGEE");
-		Date dateReservation = rs.getTimestamp("DATE_RESERVATION");
-		TypePlongee typePlongee = TypePlongee.valueOf(rs.getString("TYPEPLONGEE"));
-		String nMin = rs.getString("NIVEAU_MINI");
-		NiveauAutonomie niveauMini = NiveauAutonomie.P0;
-		if (null != nMin) {
-			niveauMini = NiveauAutonomie.valueOf(nMin);
-		}
-		int ouvertForcee = rs.getInt("OUVERTURE_FORCEE");
-		int nbMaxPlongeur = rs.getInt("NB_MAX_PLG");
-		String warning = rs.getString("WARNING");
-		if (null == warning) {
-			warning = "";
-		}
-		Plongee plongee = new Plongee();
-		plongee.setId(id);
-		plongee.setTypePlongee(typePlongee);
-		// Mise à jour de la date
-		// maj de l'heure de la plongée en fonction du type
-		GregorianCalendar gc = new GregorianCalendar();
-		gc.setTime(datePlongee);
-		gc.set(GregorianCalendar.MINUTE, 0);
-		gc.set(GregorianCalendar.SECOND, 0);
-		plongee.setDatePlongee(datePlongee);
-		plongee.setDateReservation(dateReservation);
-		plongee.setEnumNiveauMinimum(niveauMini);
-		plongee.setNbMaxPlaces(nbMaxPlongeur);
-		if (ouvertForcee == 1) {
-			plongee.setOuvertureForcee(true);
-		} else {
-			plongee.setOuvertureForcee(false);
-		}
-		List<String> participants = getAdherentsInscrits(plongee, null, null, null);
-		plongee.setParticipants(participants);
-		// plongee.setDp();
-		// for (Adherent a : participants) {
-		// if (a.isPilote()) {
-		// plongee.setPilote(a);
-		// }
-		// }
-		List<String> attente = getAdherentsWaiting(plongee);
-		plongee.setParticipantsEnAttente(attente);
-		plongee.setWarning(warning);
-		return plongee;
-	}
+	// private Plongee wrapPlongee(ResultSet rs) throws SQLException,
+	// TechnicalException {
+	// int id = rs.getInt("idPLONGEES");
+	// Date datePlongee = rs.getTimestamp("DATE_PLONGEE");
+	// Date dateReservation = rs.getTimestamp("DATE_RESERVATION");
+	// TypePlongee typePlongee = TypePlongee.valueOf(rs.getString("TYPEPLONGEE"));
+	// String nMin = rs.getString("NIVEAU_MINI");
+	// NiveauAutonomie niveauMini = NiveauAutonomie.P0;
+	// if (null != nMin) {
+	// niveauMini = NiveauAutonomie.valueOf(nMin);
+	// }
+	// int ouvertForcee = rs.getInt("OUVERTURE_FORCEE");
+	// int nbMaxPlongeur = rs.getInt("NB_MAX_PLG");
+	// String warning = rs.getString("WARNING");
+	// if (null == warning) {
+	// warning = "";
+	// }
+	// Plongee plongee = new Plongee();
+	// plongee.setId(id);
+	// plongee.setTypePlongee(typePlongee);
+	// // Mise à jour de la date
+	// // maj de l'heure de la plongée en fonction du type
+	// GregorianCalendar gc = new GregorianCalendar();
+	// gc.setTime(datePlongee);
+	// gc.set(GregorianCalendar.MINUTE, 0);
+	// gc.set(GregorianCalendar.SECOND, 0);
+	// plongee.setDatePlongee(datePlongee);
+	// plongee.setDateReservation(dateReservation);
+	// plongee.setEnumNiveauMinimum(niveauMini);
+	// plongee.setNbMaxPlaces(nbMaxPlongeur);
+	// if (ouvertForcee == 1) {
+	// plongee.setOuvertureForcee(true);
+	// } else {
+	// plongee.setOuvertureForcee(false);
+	// }
+	// List<String> participants = getAdherentsInscrits(id, null, null, null);
+	// plongee.setParticipants(participants);
+	// // plongee.setDp();
+	// // for (Adherent a : participants) {
+	// // if (a.isPilote()) {
+	// // plongee.setPilote(a);
+	// // }
+	// // }
+	// List<String> attente = getAdherentsWaiting(id);
+	// plongee.setParticipantsEnAttente(attente);
+	// plongee.setWarning(warning);
+	// return plongee;
+	// }
 
-	public List<String> getAdherentsInscrits(Plongee plongee, String niveauPlongeur, String niveauEncadrement,
+	/**
+	 * Donne la liste des adherents inscrits à la plongée
+	 * @param plongeeId
+	 *            Integer id de la plongée
+	 * @param niveauPlongeur
+	 *            String si non null, restreint la recherche à ce niveau de plongeur
+	 * @param niveauEncadrement
+	 *            String si null: pas de recherche sur niveau d'encadrement, 'TOUS'
+	 *            retourne tous les encadrants, 'Ex' retourne ce niveau d'ancadrant
+	 * @param trie
+	 *            String si null ou = 'date' order by date_inscription sinon order
+	 *            by nom
+	 * @return List<String> liste des numero de license des adherents inscrits à la plongée
+	 * @throws FunctionalException
+	 */
+	public List<String> getAdherentsInscrits(Integer plongeeId, String niveauPlongeur, String niveauEncadrement,
 			String trie) throws TechnicalException {
-		PreparedStatement st;
-		Connection conex = null;
-		try {
-			conex = getDataSource().getConnection();
-			StringBuffer sb = new StringBuffer("select * from PLONGEE p, INSCRIPTION_PLONGEE i, ADHERENT a ");
-			sb.append(" where idPLONGEES = ?");
-			sb.append(" and idPLONGEES = PLONGEES_idPLONGEES ");
-			sb.append(" and ADHERENT_LICENSE = LICENSE");
-			sb.append(" and DATE_ANNUL_PLONGEE is null");
-			if (null != niveauPlongeur) {
-				sb.append(" and a.NIVEAU = ?");
-			}
-			if (null != niveauEncadrement) {
-				if (niveauEncadrement.equalsIgnoreCase("TOUS")) {
-					sb.append(" and a.ENCADRANT is not null");
-				} else {
-					sb.append(" and a.ENCADRANT = ?");
-				}
-			}
-			if (null == trie || trie.equalsIgnoreCase("date")) {
-				sb.append(" order by DATE_INSCRIPTION");
-			} else if (trie.equalsIgnoreCase("nom")) {
-				sb.append(" order by NOM");
-			}
-			st = conex.prepareStatement(sb.toString());
-			st.setInt(1, plongee.getId());
-			if (null != niveauPlongeur) {
-				st.setString(2, niveauPlongeur);
-				if (null != niveauEncadrement && !niveauEncadrement.equalsIgnoreCase("TOUS")) {
-					st.setString(3, niveauEncadrement);
-				}
-			} else {
-				if (null != niveauEncadrement && !niveauEncadrement.equalsIgnoreCase("TOUS")) {
-					st.setString(2, niveauEncadrement);
-				}
-			}
-			ResultSet rs = st.executeQuery();
-			List<String> adherents = new ArrayList<>();
-			while (rs.next()) {
-				// Adherent adherent = wrapAdherent(rs);
-				String licence = rs.getString("LICENSE");
-				adherents.add(licence);
-			}
-			return adherents;
-		} catch (SQLException e) {
-			LOGGER.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		StringBuffer sql = new StringBuffer("select a.LICENSE from PLONGEE p, INSCRIPTION_PLONGEE i, ADHERENT a ");
+		sql.append(" where idPLONGEES = "+plongeeId);
+		sql.append(" and idPLONGEES = PLONGEES_idPLONGEES ");
+		sql.append(" and ADHERENT_LICENSE = LICENSE");
+		sql.append(" and DATE_ANNUL_PLONGEE is null");
+		if (null != niveauPlongeur) {
+			sql.append(" and a.NIVEAU = "+niveauPlongeur);
 		}
+		if (null != niveauEncadrement) {
+			if (niveauEncadrement.equalsIgnoreCase("TOUS")) {
+				sql.append(" and a.ENCADRANT is not null");
+			} else {
+				sql.append(" and a.ENCADRANT = "+niveauEncadrement);
+			}
+		}
+		if (null == trie || trie.equalsIgnoreCase("date")) {
+			sql.append(" order by DATE_INSCRIPTION");
+		} else if (trie.equalsIgnoreCase("nom")) {
+			sql.append(" order by NOM");
+		}
+		try {
+			List<String> participantsId = new ArrayList<>();
+			participantsId = jdbcTemplate.queryForList(sql.toString(), String.class);
+			return participantsId;
+		} catch (DataAccessException e) {
+			throw new FunctionalException(Functional.GENERIC, "PB Avec le getAdherentsInscrits  [" + e.getMessage() + "]");
+		}
+
 	}
 
 	/**
-	 * Retourne la liste des adherents en liste d'attente sur la plongée trie par le
-	 * DATE_ATTENTE
+	 * Donne la liste des adherents inscrits en liste d'attente à la plongée 
+	 * @param plongeeId Integer id de la plongee 
+	 * @return List<String> liste des numero de license des adherents inscrits en liste d'attente
+	 * @throws FunctionalException
 	 */
-	public List<String> getAdherentsWaiting(Plongee plongee) throws TechnicalException {
-		PreparedStatement st;
-		Connection conex = null;
+	public List<String> getAdherentsWaiting(Integer plongeeId) throws TechnicalException {
+		StringBuffer sql = new StringBuffer("select * from PLONGEE p, LISTE_ATTENTE la, ADHERENT a ");
+			sql.append(" where idPLONGEES = "+plongeeId);
+			sql.append(" and idPLONGEES = PLONGEES_idPLONGEES ");
+			sql.append(" and ADHERENT_LICENSE = LICENSE ");
+			sql.append(" and DATE_INSCRIPTION is null");
+			sql.append(" and SUPPRIMER = 0");
+			sql.append(" order by DATE_ATTENTE");
 		try {
-			conex = getDataSource().getConnection();
-			StringBuffer sb = new StringBuffer("select * from PLONGEE p, LISTE_ATTENTE la, ADHERENT a ");
-			sb.append(" where idPLONGEES = ?");
-			sb.append(" and idPLONGEES = PLONGEES_idPLONGEES ");
-			sb.append(" and ADHERENT_LICENSE = LICENSE ");
-			sb.append(" and DATE_INSCRIPTION is null");
-			sb.append(" and SUPPRIMER = 0");
-			sb.append(" order by DATE_ATTENTE");
-			st = conex.prepareStatement(sb.toString());
-			st.setInt(1, plongee.getId());
-			ResultSet rs = st.executeQuery();
-			List<String> adherents = new ArrayList<>();
-			while (rs.next()) {
-				// Adherent adherent = wrapAdherent(rs);
-				String licence = rs.getString("LICENSE");
-				adherents.add(licence);
+			List<String> participantsId = new ArrayList<>();
+			participantsId = jdbcTemplate.queryForList(sql.toString(), String.class);
+			return participantsId;
+		} catch (DataAccessException e) {
+			throw new FunctionalException(Functional.GENERIC, "PB Avec le getAdherentsWaiting  [" + e.getMessage() + "]");
+		}
+	}
+
+	
+	@Override
+	public List<Plongee> findPlongeeForEncadrant(String nbJourReserv, String nbHourApres) {
+		StringBuilder sb = new StringBuilder("SELECT * FROM PLONGEE p");
+		sb.append(" WHERE OUVERTURE_FORCEE=1");
+		sb.append(" and DATE_PLONGEE > CURRENT_DATE()");
+		sb.append(" and now() >= DATE_ADD(DATE_RESERVATION, INTERVAL " + nbJourReserv + " DAY)");
+		sb.append(" and now() < DATE_ADD(DATE_PLONGEE, INTERVAL " + nbHourApres + " HOUR)");
+		sb.append(" ORDER BY DATE_PLONGEE");
+		List<Plongee> plongees = new ArrayList<>();
+		try {
+			LOGGER.info("requete SQL:" + sb.toString());
+			plongees = jdbcTemplate.query(sb.toString(), new PlongeeRowMapper());
+			// population des participants + attente
+			for (Plongee plongee : plongees) {
+				plongee.setParticipants(getAdherentsInscrits(plongee.getId(), null, null, null));
+				plongee.setParticipantsEnAttente(getAdherentsWaiting(plongee.getId()));
 			}
-			return adherents;
-		} catch (SQLException e) {
-			LOGGER.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+			return plongees;
+		} catch (DataAccessException e) {
+			throw new FunctionalException(Functional.GENERIC, 
+					"PB Avec le findPlongeeForEncadrant() [" + e.getMessage() + "]");
+		}
+	}
+
+	@Override
+	public List<Plongee> findPlongeeForAdherent() {
+		StringBuilder sb = new StringBuilder("SELECT * FROM PLONGEE p");
+		sb.append(" WHERE OUVERTURE_FORCEE=1");
+		sb.append(" and DATE_PLONGEE > CURRENT_TIMESTAMP()");
+		sb.append(" ORDER BY DATE_PLONGEE");
+		List<Plongee> plongees = new ArrayList<>();
+		try {
+			LOGGER.info("requete SQL:" + sb.toString());
+			plongees = jdbcTemplate.query(sb.toString(), new PlongeeRowMapper());
+			// population des participants + attente
+			for (Plongee plongee : plongees) {
+				plongee.setParticipants(getAdherentsInscrits(plongee.getId(), null, null, null));
+				plongee.setParticipantsEnAttente(getAdherentsWaiting(plongee.getId()));
+			}
+			return plongees;
+		} catch (DataAccessException e) {
+			throw new FunctionalException(Functional.GENERIC, 
+					"PB Avec le findPlongeeForAdherent() [" + e.getMessage() + "]");
 		}
 	}
 

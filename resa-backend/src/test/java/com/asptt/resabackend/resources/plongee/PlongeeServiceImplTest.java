@@ -1,5 +1,7 @@
 package com.asptt.resabackend.resources.plongee;
 
+import java.util.ArrayList;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,14 +37,21 @@ public class PlongeeServiceImplTest {
 	@Test
 	public void getPlongeeByUnknownId() {
 		try {
-			plongeeService.get("9lpm25");
+			plongeeService.get("99999999");
 		} catch (NotFoundException e) {
 			LOGGER.info("Plongee non trouve");
 			Assert.assertEquals("404-0", e.getCategory() + "-" + e.getCode().getCode());
 		}
 	}
 
-//	@Test
+	@Test
+	public void findPlongees() {
+		ArrayList<Plongee> plongees = (ArrayList<Plongee>) plongeeService.find();
+		LOGGER.info("ok pour findPlongees");
+		Assert.assertEquals(plongees.size(), 10);
+	}
+
+	//	@Test
 	public void create() {
 		Plongee adh = new Plongee();
 //		adh.setNumeroLicense("unnumero");
@@ -112,10 +121,6 @@ public class PlongeeServiceImplTest {
 		} catch (TechnicalException e) {
 			LOGGER.debug("mise à jour d'un adherent plantée" + e.getMessage());
 		}
-	}
-
-//	@Test
-	public void getContactUrgent() {
 	}
 
 

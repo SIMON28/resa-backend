@@ -51,7 +51,7 @@ public class AdherentServiceImplTest {
 		}
 	}
 
-	@Test
+//	@Test
 	public void create() {
 		Adherent adh = new Adherent();
 		adh.setNumeroLicense("unnumero");
@@ -128,14 +128,14 @@ public class AdherentServiceImplTest {
 		Assert.assertEquals("DEFURNE", contact.get(0).getNom());
 	}
 
-	@Test
+//	@Test
 	public void createContactUrgent() {
 		List<ContactUrgent> contacts = adherentService.findContacts("096042");
 		List<ContactUrgent> contactCreated = adherentService.createContacts("unnumero", contacts);
 		Assert.assertEquals(contacts, contactCreated);
 	}
 
-	@Test
+//	@Test
 	public void deleteContactUrgent() {
 		adherentService.deleteContacts("unnumero");
 	}

@@ -131,7 +131,7 @@ public class Plongee implements Serializable {
     }
 
 //    public String setDp() {
-//        List<String> participants = getParticipants();
+//        List<Adherent> participants = getParticipants();
 //        List<Adherent> lesDPs = new ArrayList<>();
 //        for (String adherent : participants) {
 //            if (adherent.isDp()) {
@@ -159,7 +159,7 @@ public class Plongee implements Serializable {
 
     public List<String> getParticipants() {
         if (null == participants) {
-            return new ArrayList<>();
+            this.participants= new ArrayList<>();
         }
         return participants;
     }
@@ -170,7 +170,7 @@ public class Plongee implements Serializable {
 
     public List<String> getParticipantsEnAttente() {
         if (null == participantsEnAttente) {
-            return new ArrayList<>();
+            this.participantsEnAttente = new ArrayList<>();
         }
         return participantsEnAttente;
     }
@@ -180,18 +180,18 @@ public class Plongee implements Serializable {
     }
 
     public boolean isExistDP() {
-        if (null != getDp()) {
-            return true;
-        } else {
+        if (null == getDp() || getDp().isEmpty()) {
             return false;
+        } else {
+            return true;
         }
     }
 
     public boolean isExistPilote() {
-        if (null != getPilote()) {
-            return true;
-        } else {
+        if (null == getPilote() || getPilote().isEmpty()) {
             return false;
+        } else {
+            return true;
         }
     }
 

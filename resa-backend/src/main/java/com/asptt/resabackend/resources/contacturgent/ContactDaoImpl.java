@@ -14,16 +14,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
-import com.asptt.resa.commons.dao.Dao;
 import com.asptt.resa.commons.exception.Technical;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.entity.ContactUrgent;
 import com.asptt.resabackend.mapper.WrapperDaoEntity;
 
 @Repository("contactDao")
-public class ContactDaoImp implements Dao<ContactUrgent> {
+public class ContactDaoImpl implements ContactDao {
 
-	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ContactDaoImp.class);
+	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ContactDaoImpl.class);
 
 	@Autowired
 	private DataSource dataSource;

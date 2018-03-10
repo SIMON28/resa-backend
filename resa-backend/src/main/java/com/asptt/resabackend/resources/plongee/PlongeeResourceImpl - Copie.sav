@@ -28,6 +28,7 @@ import com.asptt.resabackend.entity.Plongee;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @Path("plongee")
+//@Component("plongeeResource")
 @Controller("plongeeResource")
 public class PlongeeResourceImpl extends ResourceBase<Plongee> {
 
@@ -63,10 +64,10 @@ public class PlongeeResourceImpl extends ResourceBase<Plongee> {
 	public Response find(final @Context UriInfo uriInfo) {
 		// return super.find(uriInfo, PlongeeSpecification.getPlongeeLightView());
 		Query query = new Query(uriInfo);
-		Integer count = getService().findCount(query.getQueryParameters());
+//		Integer count = getService().findCount(query.getQueryParameters());
 		Response response = super.find(uriInfo, PlongeeSpecification.getPlongeeFullView());
 		ArrayList<Plongee> result = (ArrayList<Plongee>) response.getEntity();
-		response.getHeaders().add("X-TOTAL-COUNT", count);
+//		response.getHeaders().add("X-TOTAL-COUNT", count);
 		response.getHeaders().add("X-RESULT-COUNT", result.size());
 		return response;
 	}

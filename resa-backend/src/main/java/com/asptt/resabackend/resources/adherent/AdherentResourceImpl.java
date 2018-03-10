@@ -30,7 +30,9 @@ import com.asptt.resa.commons.utils.URIParserUtils;
 //import com.asptt.resabackend.commons.resource.ResourceBaseResa;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.ContactUrgent;
+import com.asptt.resabackend.entity.Plongee;
 import com.asptt.resabackend.resources.contacturgent.ContactSpecification;
+import com.asptt.resabackend.resources.plongee.PlongeeSpecification;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @Path("adherent")
@@ -132,6 +134,21 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	}
 
 	@GET
+	@Path("{adherentId}/plongee")
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Override
+	public Response findPlongees(final @Context UriInfo uriInfo,
+			final @PathParam("adherentId") String adherentId) {
+		
+		List<Plongee> plongees = this.getService().findPlongees(uriInfo, adherentId);
+		
+		final Object entities = constructPlongeeEntities(convPlongeeList(plongees), PlongeeSpecification.getPlongeeFullView());
+		
+		return Response.ok(entities).build();
+	}
+	
+	
+	@GET
 	@Path("{adherentId}/contact")
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
@@ -140,7 +157,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 		
 		List<ContactUrgent> contactUrgents = this.getService().findContacts(adherentId);
 		
-		final Object entities = constructEntities(convList(contactUrgents), ContactSpecification.getContactUrgentFullView());
+		final Object entities = constructContactUrgentEntities(convContactUrgentList(contactUrgents), ContactSpecification.getContactUrgentFullView());
 		
 		return Response.ok(entities).build();
 	}
@@ -156,7 +173,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 		
 		List<ContactUrgent> contactUrgents = this.getService().createContacts(adherentId, resources);
 		
-		final Object entities = constructEntities(convList(contactUrgents), ContactSpecification.getContactUrgentFullView());
+		final Object entities = constructContactUrgentEntities(convContactUrgentList(contactUrgents), ContactSpecification.getContactUrgentFullView());
 		
 		return Response.status(Status.CREATED).entity(entities).build();
 	}
@@ -172,7 +189,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 		return super.getResponse204();
 	}
 
-	protected Object constructEntities(final Set<ContactUrgent> resources, JsonRepresentation jsonRepresentation) {
+	protected Object constructContactUrgentEntities(final Set<ContactUrgent> resources, JsonRepresentation jsonRepresentation) {
 		Object entities;
 		Set<String> attributes = jsonRepresentation.getAttributes();
 		if (attributes == null || attributes.isEmpty() || attributes.contains(URIParserUtils.ALL_FIELDS)) {
@@ -186,7 +203,29 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	/**
 	 * Convert list to set
 	 */
-	public Set<ContactUrgent> convList(List<ContactUrgent> list) {
+	public Set<ContactUrgent> convContactUrgentList(List<ContactUrgent> list) {
+		if (list == null) {
+			return new LinkedHashSet<>();
+		} else {
+			return new LinkedHashSet<>(list);
+		}
+	}
+
+	protected Object constructPlongeeEntities(final Set<Plongee> resources, JsonRepresentation jsonRepresentation) {
+		Object entities;
+		Set<String> attributes = jsonRepresentation.getAttributes();
+		if (attributes == null || attributes.isEmpty() || attributes.contains(URIParserUtils.ALL_FIELDS)) {
+			entities = resources;
+		} else {
+			entities = Jackson.createNodes(resources, jsonRepresentation);
+		}
+		return entities;
+	}
+	
+	/**
+	 * Convert list to set
+	 */
+	public Set<Plongee> convPlongeeList(List<Plongee> list) {
 		if (list == null) {
 			return new LinkedHashSet<>();
 		} else {

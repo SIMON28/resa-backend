@@ -10,9 +10,4 @@ public class ApplicationTest {
 		SpringApplication.run(ApplicationTest.class, args);
 	}
 
-//	@Bean
-//	public OpenEntityManagerInViewFilter openEntityManagerInViewFilter() {
-//		return new OpenEntityManagerInViewFilter();
-//	}
-
 }

@@ -13,7 +13,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.asptt.resa.commons.dao.Dao;
 import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.ApplicationTest;
@@ -31,7 +30,7 @@ public class AdherentDaoImplTest {
 
 
 	@Autowired
-	private Dao<Adherent> adherentDao;
+	private AdherentDao adherentDao;
 		
 	@Test
 	public void getAdherentById() {

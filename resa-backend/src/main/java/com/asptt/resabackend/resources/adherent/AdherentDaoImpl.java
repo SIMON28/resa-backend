@@ -2,36 +2,47 @@ package com.asptt.resabackend.resources.adherent;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import javax.sql.DataSource;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import com.asptt.resa.commons.dao.Dao;
 import com.asptt.resa.commons.exception.Functional;
 import com.asptt.resa.commons.exception.FunctionalException;
+import com.asptt.resa.commons.exception.NotFound;
+import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.Technical;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.Adherent.Roles;
 import com.asptt.resabackend.entity.ContactUrgent;
-import com.asptt.resabackend.mapper.WrapperDaoEntity;
+import com.asptt.resabackend.mapper.AdherentRowMapper;
+import com.asptt.resabackend.mapper.SqlSearchCriteria;
+import com.asptt.resabackend.resources.NomResources;
+import com.asptt.resabackend.util.ResaUtil;
 
 @Repository("adherentDao")
-public class AdherentDaoImpl implements Dao<Adherent> {
+public class AdherentDaoImpl implements AdherentDao {
 
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(AdherentDaoImpl.class);
+
+	@Autowired
+	private Environment env;
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;;
 
 	@Autowired
 	private Dao<ContactUrgent> contactUrgentDao;
@@ -137,106 +148,54 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 	}
 
 	@Override
-	public Adherent get(String id) {
-		Connection conex = null;
+	public Adherent get(String license) {
+		Adherent adh = null;
 		try {
-			conex = getDataSource().getConnection();
-			PreparedStatement st = conex.prepareStatement(
-					// "select * from ADHERENT where LICENSE = ? and ACTIF <> 0 and (DATE_FIN is
-					// null or CURRENT_TIMESTAMP < DATE_FIN)");
-					"select * from ADHERENT where LICENSE = ? ");
-			st.setString(1, id);
-			ResultSet rs = st.executeQuery();
-			Adherent adherent = null;
-			if (rs.next()) {
-				String license = rs.getString("LICENSE");
-				adherent = WrapperDaoEntity.wrapAdherent(rs, getStrRoles(license), getContacts(license));
-			}
-			return adherent;
-		} catch (SQLException e) {
-			// log.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+			adh = jdbcTemplate.queryForObject("select * from ADHERENT where LICENSE = ?", new AdherentRowMapper(), license);
+			adh.setRoles(getStrRoles(license));
+			adh.setContacts(getContacts(license));
+			return adh;
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "Aucun Adherent avec la license [" + license + "]");
 		}
-
 	}
 
 	@Override
 	public List<Adherent> find() {
-		Connection conex = null;
+		String sql = "select * from ADHERENT order by NOM";
+		List<Adherent> adherents = new ArrayList<>();
 		try {
-			conex = getDataSource().getConnection();
-			PreparedStatement st = conex.prepareStatement("select * from ADHERENT order by NOM");
-			ResultSet rs = st.executeQuery();
-			List<Adherent> adherents = new ArrayList<>();
-			while (rs.next()) {
-				String license = rs.getString("LICENSE");
-				Adherent adherent = WrapperDaoEntity.wrapAdherent(rs, getStrRoles(license), getContacts(license));
-				adherents.add(adherent);
+			adherents = jdbcTemplate.query(sql,  new AdherentRowMapper());
+			for(Adherent adh : adherents) {
+				adh.setRoles(getStrRoles(adh.getNumeroLicense()));
+				adh.setContacts(getContacts(adh.getNumeroLicense()));
 			}
 			return adherents;
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		} catch(DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "PB Avec le find() adherents [" + e.getMessage() + "]");
 		}
-
 	}
 
 	@Override
 	public List<Adherent> find(MultivaluedMap<String, String> criteria) {
-
-		PreparedStatement st;
-		Connection conex = null;
+		StringBuffer sql = new StringBuffer("select * from ADHERENT a");
+		SqlSearchCriteria param = ResaUtil.createSqlParameters(criteria, false, NomResources.ADHERENT);
+		List<Adherent> adherents = new ArrayList<>();
 		try {
-			conex = getDataSource().getConnection();
-
-			StringBuffer sb = new StringBuffer("select * from ADHERENT a");
-			if (criteria.isEmpty()) {
-				st = conex.prepareStatement(sb.toString());
-			} else {
-				int num = 0;
-				Map<Integer, List<String>> parameters = new HashMap<>();
-				for (Map.Entry<String, List<String>> entry : criteria.entrySet()) {
-					num = num + 1;
-					LOGGER.debug("Index=" + num + "Key : " + entry.getKey() + " Value : " + entry.getValue());
-					List<String> ent = new ArrayList<>();
-					ent.add(entry.getKey());
-					ent.add(entry.getValue().get(0));
-					parameters.put(Integer.valueOf(num), ent);
-				}
-				sb.append(" where ");
-				parameters.entrySet().stream().forEach(entry -> {
-					sb.append(" " + entry.getValue().get(0) + " LIKE ? AND ");
-				});
-				sb.delete(sb.length() - 5, sb.length() - 1);
-				sb.append(" order by NOM");
-				st = conex.prepareStatement(sb.toString());
-				for (Map.Entry<Integer, List<String>> entry : parameters.entrySet()) {
-					try {
-						st.setString(entry.getKey(), entry.getValue().get(1));
-					} catch (SQLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-				;
+			if (param.getNbParam() > 0) {
+				sql.append(param.getSql());
 			}
-			LOGGER.info("Requete SQL Find avec critera=" + st.toString());
-			ResultSet rs = st.executeQuery();
-			List<Adherent> adherents = new ArrayList<>();
-			while (rs.next()) {
-				String license = rs.getString("LICENSE");
-				Adherent adherent = WrapperDaoEntity.wrapAdherent(rs, getStrRoles(license), getContacts(license));
-				adherents.add(adherent);
+			LOGGER.info("requete SQL:" + sql.toString());
+			adherents = jdbcTemplate.query(sql.toString(), param.getArgs(), new AdherentRowMapper());
+			for(Adherent adh : adherents) {
+				adh.setRoles(getStrRoles(adh.getNumeroLicense()));
+				adh.setContacts(getContacts(adh.getNumeroLicense()));
 			}
 			return adherents;
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		} catch(DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "PB Avec le find(MultivaluedMap) adherents [" + e.getMessage() + "]");
 		}
+						
 	}
 
 	@Override
@@ -383,77 +342,41 @@ public class AdherentDaoImpl implements Dao<Adherent> {
 
 	}
 
-	public List<String> getStrRoles(String adherentId) throws TechnicalException {
-		PreparedStatement st;
-		Connection conex = null;
+	public List<String> getStrRoles(String adherentId) {
+		StringBuffer sql = new StringBuffer("SELECT r.LIBELLE FROM REL_ADHERENT_ROLES rel, ROLES r ");
+		sql.append(" where rel.ROLES_idROLES = r.idROLES ");
+		sql.append(" and rel.ADHERENT_LICENSE = "+adherentId);
 		try {
-			conex = getDataSource().getConnection();
-			StringBuffer sb = new StringBuffer("SELECT r.LIBELLE FROM REL_ADHERENT_ROLES rel, ROLES r ");
-			sb.append(" where rel.ROLES_idROLES = r.idROLES ");
-			sb.append(" and rel.ADHERENT_LICENSE = ?");
-			st = conex.prepareStatement(sb.toString());
-			st.setString(1, adherentId);
-			ResultSet rs = st.executeQuery();
-			List<String> result = new ArrayList<>();
-			while (rs.next()) {
-				result.add(rs.getString("LIBELLE"));
-			}
-			return result;
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+			List<String> rolesId = new ArrayList<>();
+			rolesId = jdbcTemplate.queryForList(sql.toString(), String.class);
+			return rolesId;
+		} catch (DataAccessException e) {
+			throw new FunctionalException(Functional.GENERIC, "PB Avec le getStrRoles  [" + e.getMessage() + "]");
 		}
 	}
 
 	public int getIdRole(String libelle) throws TechnicalException {
-		PreparedStatement st;
-		Connection conex = null;
+		StringBuffer sb = new StringBuffer("select idRoles from ROLES where libelle = '"+libelle+"'");
 		try {
-			conex = getDataSource().getConnection();
-			StringBuffer sb = new StringBuffer("select idRoles from ROLES where libelle=? ");
-			st = conex.prepareStatement(sb.toString());
-			st.setString(1, libelle);
-			ResultSet rs = st.executeQuery();
-			int id = 0;
-			while (rs.next()) {
-				id = rs.getInt("IdRoles");
-			}
-			return id;
-		} catch (SQLException e) {
-			LOGGER.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+			Integer rID = jdbcTemplate.queryForObject(sb.toString(), Integer.class);
+			return rID.intValue();
+		} catch(DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "PB Avec le getIdRole()  [" + e.getMessage() + "]");
 		}
 	}
 
 	public List<String> getContacts(String adherentId) throws TechnicalException {
-		Connection conex = null;
+		StringBuffer sql = new StringBuffer(" SELECT cu.idCONTACT ");
+		sql.append(" FROM REL_ADHERENT_CONTACT rel , CONTACT_URGENT cu");
+		sql.append(" where rel.ADHERENT_LICENSE = "+adherentId);
+		sql.append(" and  rel.CONTACT_URGENT_IDCONTACT = cu.IDCONTACT");
+		sql.append(" order by cu.IDCONTACT");
 		try {
-			conex = getDataSource().getConnection();
-			StringBuffer sb = new StringBuffer();
-			sb.append("SELECT cu.idCONTACT, cu.TITRE, cu.NOM, cu.PRENOM, cu.TELEPHONE, cu.TELEPHTWO");
-			sb.append(" FROM REL_ADHERENT_CONTACT rel , CONTACT_URGENT cu");
-			sb.append(" where rel.ADHERENT_LICENSE = ?");
-			sb.append(" and  rel.CONTACT_URGENT_IDCONTACT = cu.IDCONTACT");
-			sb.append(" order by cu.IDCONTACT");
-
-			PreparedStatement st = conex.prepareStatement(sb.toString());
-			st.setString(1, adherentId);
-			ResultSet rs = st.executeQuery();
-
 			List<String> contactsId = new ArrayList<>();
-			while (rs.next()) {
-				ContactUrgent contact = WrapperDaoEntity.wrapContact(rs);
-				contactsId.add(contact.getId().toString());
-			}
+			contactsId = jdbcTemplate.queryForList(sql.toString(), String.class);
 			return contactsId;
-
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		} catch (DataAccessException e) {
+			throw new FunctionalException(Functional.GENERIC, "PB Avec le getContacts  [" + e.getMessage() + "]");
 		}
 	}
 

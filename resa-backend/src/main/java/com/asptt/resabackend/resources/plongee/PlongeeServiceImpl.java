@@ -1,5 +1,6 @@
 package com.asptt.resabackend.resources.plongee;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -9,14 +10,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.asptt.resa.commons.exception.NotFound;
-import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.service.ServiceBase;
 import com.asptt.resabackend.entity.Adherent;
 //import com.asptt.resabackend.commons.service.ServiceBaseResa;
 import com.asptt.resabackend.entity.Plongee;
-import com.asptt.resabackend.resources.adherent.AdherentServiceImpl;
-import com.asptt.resabackend.util.Parameters;
+import com.asptt.resabackend.resources.adherent.AdherentService;
 
 @Service("plongeeService")
 public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeService {
@@ -24,13 +22,13 @@ public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeS
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(PlongeeServiceImpl.class);
 
 	@Autowired
-	private PlongeeDaoImpl plongeeDao;
+	private PlongeeDao plongeeDao;
 
 	@Autowired
-	AdherentServiceImpl adherentService;
+	AdherentService adherentService;
 
 	@Override
-	protected PlongeeDaoImpl getDao() {
+	protected PlongeeDao getDao() {
 		return this.plongeeDao;
 	}
 
@@ -50,20 +48,31 @@ public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeS
 	}
 
 	@Override
+	public List<Plongee> find() {
+		return setDpPilote(super.find());
+	}
+
+	@Override
 	public List<Plongee> find(MultivaluedMap<String, String> criteria) {
-		Parameters.getInt("plongee.limit");
-		criteria.containsKey("limit");
 		for (Map.Entry<String, List<String>> entry : criteria.entrySet()) {
-			LOGGER.info("clé=["+entry.getKey()+"] valeur=["+entry.getValue().get(0)+"]");
+			LOGGER.info("clé=[" + entry.getKey() + "] valeur=[" + entry.getValue().get(0) + "]");
 		}
 
-		return super.find(criteria);
+		return setDpPilote(super.find(criteria));
 	}
 
 	@Override
 	public Plongee get(String id) {
 		Plongee plongee = super.get(id);
-		if (null != plongee) {
+		List<Plongee> plongees = new ArrayList<>();
+		plongees.add(plongee);
+		setDpPilote(plongees);
+		return plongees.get(0);
+	}
+
+	private List<Plongee> setDpPilote(List<Plongee> plongees) {
+		List<Plongee> updatedPlongees = new ArrayList<>();
+		for (Plongee plongee : plongees) {
 			for (String adhId : plongee.getParticipants()) {
 				Adherent adh = adherentService.get(adhId);
 				if (adh.isPilote()) {
@@ -73,11 +82,21 @@ public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeS
 					plongee.setDp(adhId);
 				}
 			}
-		} else {
-			throw new NotFoundException(NotFound.GENERIC, "id plongee [" + id + "] n'existe pas");
+			updatedPlongees.add(plongee);
 		}
-		return plongee;
+		return updatedPlongees;
 	}
 
+	@Override
+	public List<Plongee> findPlongeeForEncadrant(String nbJourReserv, String nbHourApres) {
+		List<Plongee> plongees = getDao().findPlongeeForEncadrant(nbJourReserv, nbHourApres);
+		return setDpPilote(plongees);
+	}
+
+	@Override
+	public List<Plongee> findPlongeeForAdherent() {
+		List<Plongee> plongees = getDao().findPlongeeForAdherent();
+		return setDpPilote(plongees);
+	}
 
 }

@@ -7,7 +7,7 @@
 			<AppenderRef ref="SpringBoot-Appender" />
 			<AppenderRef ref="Console-Appender" />
 		</Logger>
-		<Logger name="com.asptt.resabackend" level="info"  additivity="false">
+		<Logger name="com.asptt.resabackend" level="debug"  additivity="false">
 			<AppenderRef ref="App-Appender" />
 			<AppenderRef ref="Console-Appender" />
 		</Logger>

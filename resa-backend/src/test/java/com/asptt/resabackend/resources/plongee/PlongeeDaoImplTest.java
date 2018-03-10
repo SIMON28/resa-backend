@@ -9,7 +9,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import com.asptt.resa.commons.dao.Dao;
 import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resabackend.ApplicationTest;
 import com.asptt.resabackend.entity.Plongee;
@@ -24,7 +23,7 @@ public class PlongeeDaoImplTest {
 
 
 	@Autowired
-	private Dao<Plongee> plongeeDao;
+	private PlongeeDao plongeeDao;
 		
 	@Test
 	public void getPlongeeById() {
@@ -36,7 +35,7 @@ public class PlongeeDaoImplTest {
 	@Test
 	public void getPlongeeByUnknownId() {
 		try {
-		Plongee adh = plongeeDao.get("9lpm25");
+		Plongee adh = plongeeDao.get("9999999");
 		} catch(NotFoundException e) {
 			Assert.assertEquals("404-0", e.getCategory()+"-"+e.getCode().getCode());
 		}

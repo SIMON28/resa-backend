@@ -20,4 +20,6 @@ public interface AdherentResource extends Resource<Adherent> {
 
 	Response deleteContacts(UriInfo uriInfo, String adherentId);
 
+	Response findPlongees(UriInfo uriInfo, String adherentId);
+
 }

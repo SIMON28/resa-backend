@@ -1,9 +1,13 @@
 package com.asptt.resabackend.resources.adherent;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
+import javax.ws.rs.core.UriInfo;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import com.asptt.resa.commons.exception.Functional;
@@ -13,19 +17,27 @@ import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.service.ServiceBase;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.ContactUrgent;
+import com.asptt.resabackend.entity.Plongee;
 import com.asptt.resabackend.resources.contacturgent.ContactService;
+import com.asptt.resabackend.resources.plongee.PlongeeService;
 
 @Service("adherentService")
 public class AdherentServiceImpl extends ServiceBase<Adherent> implements AdherentService {
 
 	@Autowired
-	private AdherentDaoImpl adherentDao;
+	private Environment env;
+
+	@Autowired
+	private AdherentDao adherentDao;
 
 	@Autowired
 	private ContactService contactService;
 
+	@Autowired
+	private PlongeeService plongeeService;
+
 	@Override
-	protected AdherentDaoImpl getDao() {
+	protected AdherentDao getDao() {
 		return this.adherentDao;
 	}
 
@@ -81,6 +93,21 @@ public class AdherentServiceImpl extends ServiceBase<Adherent> implements Adhere
 	public void deleteContacts(String adherentId) {
 		
 		contactService.deleteContactsForAdherent(adherentId);
+	}
+
+	@Override
+	public List<Plongee> findPlongees(UriInfo uriInfo, String adherentId) {
+		Adherent adh = get(adherentId);
+		List<Plongee> plongees = new ArrayList<>();
+		if(adh.isDp()) {
+			plongees = plongeeService.findPlongeeForEncadrant(
+					env.getProperty("visible.apres.encadrant"),
+					env.getProperty("reservation.max"));
+		} else {
+			plongees = plongeeService.findPlongeeForAdherent();
+		}
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	
