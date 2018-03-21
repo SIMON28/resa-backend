@@ -19,7 +19,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import com.asptt.resa.commons.exception.TechnicalException;
-import com.asptt.resabackend.entity.Plongee;
 import com.asptt.resabackend.mapper.SqlSearchCriteria;
 import com.asptt.resabackend.resources.NomResources;
 
@@ -161,11 +160,10 @@ public class ResaUtil {
 	 */
 	public static SqlSearchCriteria createSqlParameters(MultivaluedMap<String, String> criteria, Boolean forCount,
 			NomResources resource) {
-		String limit = envstat.getProperty("plongee.limit");
-		String offset = envstat.getProperty("plongee.offset");
+		String limit = envstat.getProperty("pagination.limit");
+		String offset = envstat.getProperty("pagination.offset");
 		StringBuffer sb = new StringBuffer();
 		int nbParam = 0;
-		List<Plongee> plongees = new ArrayList<>();
 		Object[] args = null;
 		int num = 0;
 		Map<Integer, List<String>> parameters = new HashMap<>();

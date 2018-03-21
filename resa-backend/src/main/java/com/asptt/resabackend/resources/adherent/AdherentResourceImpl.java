@@ -1,5 +1,6 @@
 package com.asptt.resabackend.resources.adherent;
 
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.asptt.resa.commons.annotation.PATCH;
 import com.asptt.resa.commons.json.Jackson;
 import com.asptt.resa.commons.json.JsonRepresentation;
+import com.asptt.resa.commons.resource.Query;
 import com.asptt.resa.commons.resource.ResourceBase;
 import com.asptt.resa.commons.utils.URIParserUtils;
 //import com.asptt.resabackend.commons.resource.ResourceBaseResa;
@@ -37,7 +39,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 @Path("adherent")
 @Component("adherentResource")
-public class AdherentResourceImpl extends ResourceBase<Adherent> implements AdherentResource{
+public class AdherentResourceImpl extends ResourceBase<Adherent> implements AdherentResource {
 
 	@Autowired
 	private AdherentService service;
@@ -46,13 +48,12 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	protected AdherentService getService() {
 		return this.service;
 	}
-	
+
 	@POST
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
-	public Response create(final @Context UriInfo uriInfo,
-			final @RequestBody Adherent resource) {
+	public Response create(final @Context UriInfo uriInfo, final @RequestBody Adherent resource) {
 		return super.create(uriInfo, resource);
 	}
 
@@ -60,9 +61,8 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	@Path("{id}")
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
-	public Response get(final @Context UriInfo uriInfo,
-			final @PathParam("id") String id) {
-		Response resp = super.get(uriInfo, id); 
+	public Response get(final @Context UriInfo uriInfo, final @PathParam("id") String id) {
+		Response resp = super.get(uriInfo, id);
 		return resp;
 	}
 
@@ -70,43 +70,54 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
 	public Response find(final @Context UriInfo uriInfo) {
-//		return super.find(uriInfo, AdherentSpecification.getAdherentLightView());
-		return super.find(uriInfo, AdherentSpecification.getAdherentFullView());
-//		return super.find(uriInfo);
+		// return super.find(uriInfo, AdherentSpecification.getAdherentLightView());
+//		return super.find(uriInfo, AdherentSpecification.getAdherentFullView());
+		
+		
+		Query query = new Query(uriInfo);
+		Integer count = getService().findCount(query.getQueryParameters());
+		Response response = super.find(uriInfo, AdherentSpecification.getAdherentFullView());
+		ArrayList<Adherent> result = (ArrayList<Adherent>) response.getEntity();
+		response.getHeaders().add("X-TOTAL-COUNT", count);
+		response.getHeaders().add("X-RESULT-COUNT", result.size());
+		return response;
+		// return super.find(uriInfo);
 	}
 
-	 /* update full */
-	 @PUT
-	 @Path("{id}")
-	 @Consumes({ MediaType.APPLICATION_JSON })
-	 @Produces({ MediaType.APPLICATION_JSON })
-	 @Override
-	 public Response update(final @Context UriInfo uriInfo,
-	 final @PathParam("id") String id,
-	 final @RequestBody Adherent resource) {
-	 return super.update(uriInfo, id, resource);
-	 }
+	/* update full */
+	@PUT
+	@Path("{id}")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Override
+	public Response update(final @Context UriInfo uriInfo, final @PathParam("id") String id,
+			final @RequestBody Adherent resource) {
+		Adherent adh = this.getService().update(id, resource);
+		
+		final Object entity = getEntity(adh, AdherentSpecification.getAdherentFullView());
+		return Response.ok(entity).build();
+		// return super.update(uriInfo, id, resource);
+	}
 
 	/* update, merge */
-//	@PUT
-//	@Path("{id}")
-//	@Consumes({ MediaType.APPLICATION_JSON })
-//	@Produces({ MediaType.APPLICATION_JSON })
-//	@Override
-//	public Response merge(final @Context UriInfo uriInfo,
-//			final @PathParam("id") String id,
-//			final @RequestBody JsonNode partialResource) {
-//		return super.merge(uriInfo, id, partialResource,
-//				AdherentSpecification.getAdherentFullView());
-//	}
+	// @PUT
+	// @Path("{id}")
+	// @Consumes({ MediaType.APPLICATION_JSON })
+	// @Produces({ MediaType.APPLICATION_JSON })
+	// @Override
+	// public Response merge(final @Context UriInfo uriInfo,
+	// final @PathParam("id") String id,
+	// final @RequestBody JsonNode partialResource) {
+	// return super.merge(uriInfo, id, partialResource,
+	// AdherentSpecification.getAdherentFullView());
+	// }
 
 	@DELETE
 	@Path("{id}")
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
-	public Response delete(final @Context UriInfo uriInfo,
-			final @PathParam("id") String id) {
+	public Response delete(final @Context UriInfo uriInfo, final @PathParam("id") String id) {
 		return super.delete(uriInfo, id);
 	}
 
@@ -115,8 +126,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
-	public Response diff(final @Context UriInfo uriInfo,
-			final @PathParam("id") String id,
+	public Response diff(final @Context UriInfo uriInfo, final @PathParam("id") String id,
 			final @RequestBody JsonNode targetResource) {
 		return super.diff(uriInfo, id, targetResource);
 	}
@@ -126,55 +136,52 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	@Consumes({ "application/json-patch+json" })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
-	public Response patch(final @Context UriInfo uriInfo,
-			final @PathParam("id") String id,
+	public Response patch(final @Context UriInfo uriInfo, final @PathParam("id") String id,
 			final @RequestBody JsonNode jsonPatch) {
-		return super.patch(uriInfo, id, jsonPatch,
-				AdherentSpecification.getAdherentFullView());
+		return super.patch(uriInfo, id, jsonPatch, AdherentSpecification.getAdherentFullView());
 	}
 
 	@GET
 	@Path("{adherentId}/plongee")
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
-	public Response findPlongees(final @Context UriInfo uriInfo,
-			final @PathParam("adherentId") String adherentId) {
-		
+	public Response findPlongees(final @Context UriInfo uriInfo, final @PathParam("adherentId") String adherentId) {
+
 		List<Plongee> plongees = this.getService().findPlongees(uriInfo, adherentId);
-		
-		final Object entities = constructPlongeeEntities(convPlongeeList(plongees), PlongeeSpecification.getPlongeeFullView());
-		
+
+		final Object entities = constructPlongeeEntities(convPlongeeList(plongees),
+				PlongeeSpecification.getPlongeeFullView());
+
 		return Response.ok(entities).build();
 	}
-	
-	
+
 	@GET
 	@Path("{adherentId}/contact")
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
-	public Response findContacts(final @Context UriInfo uriInfo,
-			final @PathParam("adherentId") String adherentId) {
-		
+	public Response findContacts(final @Context UriInfo uriInfo, final @PathParam("adherentId") String adherentId) {
+
 		List<ContactUrgent> contactUrgents = this.getService().findContacts(adherentId);
-		
-		final Object entities = constructContactUrgentEntities(convContactUrgentList(contactUrgents), ContactSpecification.getContactUrgentFullView());
-		
+
+		final Object entities = constructContactUrgentEntities(convContactUrgentList(contactUrgents),
+				ContactSpecification.getContactUrgentFullView());
+
 		return Response.ok(entities).build();
 	}
-	
+
 	@POST
 	@Path("{adherentId}/contact")
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
-	public Response createContacts(final @Context UriInfo uriInfo,
-			final @PathParam("adherentId") String adherentId,
+	public Response createContacts(final @Context UriInfo uriInfo, final @PathParam("adherentId") String adherentId,
 			final @RequestBody List<ContactUrgent> resources) {
-		
+
 		List<ContactUrgent> contactUrgents = this.getService().createContacts(adherentId, resources);
-		
-		final Object entities = constructContactUrgentEntities(convContactUrgentList(contactUrgents), ContactSpecification.getContactUrgentFullView());
-		
+
+		final Object entities = constructContactUrgentEntities(convContactUrgentList(contactUrgents),
+				ContactSpecification.getContactUrgentFullView());
+
 		return Response.status(Status.CREATED).entity(entities).build();
 	}
 
@@ -183,13 +190,13 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
-	public Response deleteContacts(final @Context UriInfo uriInfo,
-			final @PathParam("adherentId") String adherentId) {
+	public Response deleteContacts(final @Context UriInfo uriInfo, final @PathParam("adherentId") String adherentId) {
 		this.getService().deleteContacts(adherentId);
 		return super.getResponse204();
 	}
 
-	protected Object constructContactUrgentEntities(final Set<ContactUrgent> resources, JsonRepresentation jsonRepresentation) {
+	protected Object constructContactUrgentEntities(final Set<ContactUrgent> resources,
+			JsonRepresentation jsonRepresentation) {
 		Object entities;
 		Set<String> attributes = jsonRepresentation.getAttributes();
 		if (attributes == null || attributes.isEmpty() || attributes.contains(URIParserUtils.ALL_FIELDS)) {
@@ -199,7 +206,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 		}
 		return entities;
 	}
-	
+
 	/**
 	 * Convert list to set
 	 */
@@ -221,11 +228,33 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 		}
 		return entities;
 	}
-	
+
 	/**
 	 * Convert list to set
 	 */
 	public Set<Plongee> convPlongeeList(List<Plongee> list) {
+		if (list == null) {
+			return new LinkedHashSet<>();
+		} else {
+			return new LinkedHashSet<>(list);
+		}
+	}
+
+	protected Object constructAdherentEntities(final Set<Adherent> resources, JsonRepresentation jsonRepresentation) {
+		Object entities;
+		Set<String> attributes = jsonRepresentation.getAttributes();
+		if (attributes == null || attributes.isEmpty() || attributes.contains(URIParserUtils.ALL_FIELDS)) {
+			entities = resources;
+		} else {
+			entities = Jackson.createNodes(resources, jsonRepresentation);
+		}
+		return entities;
+	}
+
+	/**
+	 * Convert list to set
+	 */
+	public Set<Adherent> convAdherentList(List<Adherent> list) {
 		if (list == null) {
 			return new LinkedHashSet<>();
 		} else {

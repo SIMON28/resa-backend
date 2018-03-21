@@ -1,14 +1,11 @@
 package com.asptt.resabackend.resources.adherent;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.sql.DataSource;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.slf4j.LoggerFactory;
@@ -16,9 +13,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import com.asptt.resa.commons.dao.Dao;
 import com.asptt.resa.commons.exception.Functional;
 import com.asptt.resa.commons.exception.FunctionalException;
 import com.asptt.resa.commons.exception.NotFound;
@@ -27,11 +25,11 @@ import com.asptt.resa.commons.exception.Technical;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.Adherent.Roles;
-import com.asptt.resabackend.entity.ContactUrgent;
 import com.asptt.resabackend.mapper.AdherentRowMapper;
 import com.asptt.resabackend.mapper.SqlSearchCriteria;
 import com.asptt.resabackend.resources.NomResources;
 import com.asptt.resabackend.util.ResaUtil;
+import com.mysql.jdbc.Statement;
 
 @Repository("adherentDao")
 public class AdherentDaoImpl implements AdherentDao {
@@ -42,107 +40,81 @@ public class AdherentDaoImpl implements AdherentDao {
 	private Environment env;
 
 	@Autowired
-	private JdbcTemplate jdbcTemplate;;
-
-	@Autowired
-	private Dao<ContactUrgent> contactUrgentDao;
-
-	@Autowired
-	private DataSource dataSource;
-
-	public DataSource getDataSource() {
-		return dataSource;
-	}
-
-	public void setDataSource(DataSource dataSource) {
-		this.dataSource = dataSource;
-	}
-
-	public void closeConnexion(Connection connexion) {
-		try {
-			if (null != connexion) {
-				connexion.close();
-			}
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, "Impossible de cloturer la connexion");
-		}
-		connexion = null;
-	}
+	private JdbcTemplate jdbcTemplate;
 
 	@Override
 	public Adherent create(Adherent adh) throws TechnicalException {
-		Connection conex = null;
+		KeyHolder keyHolder = new GeneratedKeyHolder();
 		try {
-			conex = getDataSource().getConnection();
-			StringBuffer sb = new StringBuffer();
-			sb.append(
+			StringBuffer sql = new StringBuffer();
+			sql.append(
 					"INSERT INTO ADHERENT (`LICENSE`, `NOM`, `PRENOM`, `NIVEAU`, `TELEPHONE`, `MAIL`, `ENCADRANT`, `PILOTE`, `DATE_DEBUT`, `ACTIF`, `PASSWORD`, `DATE_CM`, `ANNEE_COTI`, `TIV`, `COMMENTAIRE`, `APTITUDE`)");
-			sb.append(" VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp, ?, ?, ?, ?, ?, ?, ?)");
-			PreparedStatement st = conex.prepareStatement(sb.toString());
-			st.setString(1, adh.getNumeroLicense());
-			st.setString(2, adh.getNom());
-			st.setString(3, adh.getPrenom());
-			st.setString(4, adh.getNiveau());
-			st.setString(5, adh.getTelephone());
-			st.setString(6, adh.getMail());
-			if (adh.isEncadrent()) {
-				st.setString(7, adh.getEncadrement());
-			} else {
-				st.setString(7, null);
-			}
-			if (adh.isPilote()) {
-				st.setInt(8, 1);
-			} else {
-				st.setInt(8, 0);
-			}
-			st.setInt(9, adh.getActifInt());
-			st.setString(10, adh.getNumeroLicense());
-			Timestamp tsCm = new Timestamp(adh.getDateCM().getTime());
-			st.setTimestamp(11, tsCm);
-			st.setInt(12, adh.getAnneeCotisation());
-			if (adh.isTiv()) {
-				st.setInt(13, 1);
-			} else {
-				st.setInt(13, 0);
-			}
-			st.setString(14, adh.getCommentaire());
-			if (adh.isAptitude()) {
-				st.setString(15, adh.getAptitude());
-			} else {
-				st.setString(15, null);
-			}
-			if (st.executeUpdate() == 0) {
-				throw new TechnicalException(Technical.GENERIC,
-						"L'adhérent n'a pu être créé pour le numero de license [" + adh.getNumeroLicense() + "]");
-			}
-
+			sql.append(" VALUES (?, ?, ?, ?, ?, ?, ?, ?, current_timestamp, ?, ?, ?, ?, ?, ?, ?)");
+			// creation de l'adherent
+			jdbcTemplate.update(connection -> {
+				PreparedStatement ps = connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);
+				ps.setString(1, adh.getNumeroLicense());
+				ps.setString(2, adh.getNom());
+				ps.setString(3, adh.getPrenom());
+				ps.setString(4, adh.getNiveau());
+				ps.setString(5, adh.getTelephone());
+				ps.setString(6, adh.getMail());
+				if (adh.isEncadrent()) {
+					ps.setString(7, adh.getEncadrement());
+				} else {
+					ps.setString(7, null);
+				}
+				if (adh.isPilote()) {
+					ps.setInt(8, 1);
+				} else {
+					ps.setInt(8, 0);
+				}
+				ps.setInt(9, adh.getActifInt());
+				ps.setString(10, adh.getNumeroLicense());
+				Timestamp tsCm = new Timestamp(adh.getDateCM().getTime());
+				ps.setTimestamp(11, tsCm);
+				ps.setInt(12, adh.getAnneeCotisation());
+				if (adh.isTiv()) {
+					ps.setInt(13, 1);
+				} else {
+					ps.setInt(13, 0);
+				}
+				ps.setString(14, adh.getCommentaire());
+				if (adh.isAptitude()) {
+					ps.setString(15, adh.getAptitude());
+				} else {
+					ps.setString(15, null);
+				}
+				return ps;
+			}, keyHolder);
+			Number idAdh = keyHolder.getKey();
 			// gestion des roles
-			sb = new StringBuffer();
 			if (adh.getActifInt() == 1) {
 				// On gere les role uniquement pour les actifs
-				Iterator<Roles> it = adh.getRoles().iterator();
-				while (it.hasNext()) {
-					sb.append("INSERT INTO REL_ADHERENT_ROLES (`ADHERENT_LICENSE`, `ROLES_idROLES`)");
-					sb.append(" VALUES (?, ?)");
-					st = conex.prepareStatement(sb.toString());
-					st.setString(1, adh.getNumeroLicense());
-					Adherent.Roles role = it.next();
-					int id = getIdRole(role.name());
-					st.setInt(2, id);
-					if (st.executeUpdate() == 0) {
-						throw new TechnicalException(Technical.GENERIC,
-								"Le role [" + id + "] n'a pu être enregistré pour le numero de license ["
-										+ adh.getNumeroLicense() + "]");
+				try {
+					Iterator<Roles> it = adh.getRoles().iterator();
+					StringBuffer sql1 = new StringBuffer();
+					sql1.append("INSERT INTO REL_ADHERENT_ROLES (`ADHERENT_LICENSE`, `ROLES_idROLES`)");
+					sql1.append(" VALUES (?, ?)");
+					while (it.hasNext()) {
+						jdbcTemplate.update(connection -> {
+							PreparedStatement ps = connection.prepareStatement(sql1.toString(),
+									Statement.RETURN_GENERATED_KEYS);
+							ps.setString(1, adh.getNumeroLicense());
+							Adherent.Roles role = it.next();
+							int id = getIdRole(role.name());
+							ps.setInt(2, id);
+							return ps;
+						}, keyHolder);
 					}
-					sb = new StringBuffer();
+				} catch (DataAccessException e) {
+					throw new TechnicalException(Technical.GENERIC,
+							"Pb creation Table relation :" + adh.getNumeroLicense() + ", erreur : " + e.getMessage());
 				}
 			}
-			// gestion des Contacts creer les contact ulterieurement avec la sous resource contactUrgent
-			
-		} catch (SQLException e) {
-			LOGGER.error("Impossible de supprimer les roles de l'adherent dans la table de relation");
-		} finally {
-			closeConnexion(conex);
+		} catch (DataAccessException e) {
+			throw new TechnicalException(Technical.GENERIC, "Pb creation Adherent :" + adh.getNumeroLicense() + ", "
+					+ adh.getNom() + ", " + adh.getPrenom() + "erreur : " + e.getMessage());
 		}
 		return adh;
 	}
@@ -151,7 +123,8 @@ public class AdherentDaoImpl implements AdherentDao {
 	public Adherent get(String license) {
 		Adherent adh = null;
 		try {
-			adh = jdbcTemplate.queryForObject("select * from ADHERENT where LICENSE = ?", new AdherentRowMapper(), license);
+			adh = jdbcTemplate.queryForObject("select * from ADHERENT where LICENSE = ?", new AdherentRowMapper(),
+					license);
 			adh.setRoles(getStrRoles(license));
 			adh.setContacts(getContacts(license));
 			return adh;
@@ -161,17 +134,43 @@ public class AdherentDaoImpl implements AdherentDao {
 	}
 
 	@Override
+	public Integer findCount(MultivaluedMap<String, String> criteria) {
+		StringBuffer sql = new StringBuffer("select count(*) from ADHERENT a ");
+		SqlSearchCriteria param = ResaUtil.createSqlParameters(criteria, true, NomResources.ADHERENT);
+		Integer count;
+		try {
+			if (param.getNbParam() > 0) {
+				sql.append(param.getSql());
+				LOGGER.info("NbParam:" + param.getNbParam() + "SQL:" + sql.toString() + " taille args ["
+						+ param.getArgs().length + "]");
+				for (int i = 0; i < param.getArgs().length; i++) {
+					LOGGER.info("arg" + i + " = [" + param.getArgs()[i] + "]");
+				}
+				count = jdbcTemplate.queryForObject(sql.toString(), param.getArgs(), Integer.class);
+			} else {
+				LOGGER.info("FindCount() sans parametre SQL:" + sql.toString());
+				count = jdbcTemplate.queryForObject(sql.toString(), Integer.class);
+			}
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "PB Avec le findCount() Adherent [" + e.getMessage() + "]");
+		}
+		LOGGER.info("Trouver [" + count + "] enreg pour sql:" + sql.toString());
+		return count;
+	}
+
+	@Override
 	public List<Adherent> find() {
-		String sql = "select * from ADHERENT order by NOM";
+		String limit = env.getProperty("pagination.limit");
+		String sql = "select * from ADHERENT order by NOM desc LIMIT " + limit;
 		List<Adherent> adherents = new ArrayList<>();
 		try {
-			adherents = jdbcTemplate.query(sql,  new AdherentRowMapper());
-			for(Adherent adh : adherents) {
+			adherents = jdbcTemplate.query(sql, new AdherentRowMapper());
+			for (Adherent adh : adherents) {
 				adh.setRoles(getStrRoles(adh.getNumeroLicense()));
 				adh.setContacts(getContacts(adh.getNumeroLicense()));
 			}
 			return adherents;
-		} catch(DataAccessException e) {
+		} catch (DataAccessException e) {
 			throw new NotFoundException(NotFound.GENERIC, "PB Avec le find() adherents [" + e.getMessage() + "]");
 		}
 	}
@@ -182,158 +181,88 @@ public class AdherentDaoImpl implements AdherentDao {
 		SqlSearchCriteria param = ResaUtil.createSqlParameters(criteria, false, NomResources.ADHERENT);
 		List<Adherent> adherents = new ArrayList<>();
 		try {
-			if (param.getNbParam() > 0) {
+//			if (param.getNbParam() > 0) {
 				sql.append(param.getSql());
-			}
+//			}
 			LOGGER.info("requete SQL:" + sql.toString());
 			adherents = jdbcTemplate.query(sql.toString(), param.getArgs(), new AdherentRowMapper());
-			for(Adherent adh : adherents) {
+			for (Adherent adh : adherents) {
 				adh.setRoles(getStrRoles(adh.getNumeroLicense()));
 				adh.setContacts(getContacts(adh.getNumeroLicense()));
 			}
 			return adherents;
-		} catch(DataAccessException e) {
-			throw new NotFoundException(NotFound.GENERIC, "PB Avec le find(MultivaluedMap) adherents [" + e.getMessage() + "]");
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC,
+					"PB Avec le find(MultivaluedMap) adherents [" + e.getMessage() + "]");
 		}
-						
+
 	}
 
 	@Override
 	public Adherent update(Adherent resource) {
-		Connection conex = null;
+		KeyHolder keyHolder = new GeneratedKeyHolder();
 		try {
-			conex = getDataSource().getConnection();
-			StringBuffer sb = new StringBuffer();
-			sb.append("UPDATE ADHERENT");
-			sb.append(" SET NIVEAU = ?,");
-			sb.append(" TELEPHONE = ?,");
-			sb.append(" MAIL = ?,");
-			sb.append(" ENCADRANT = ?,");
-			sb.append(" PILOTE = ?,");
-			sb.append(" ACTIF = ?,");
-			sb.append(" NOM = ?,");
-			sb.append(" PRENOM = ?,");
-			sb.append(" DATE_CM = ?,");
-			sb.append(" ANNEE_COTI = ?,");
-			sb.append(" TIV = ?,");
-			sb.append(" COMMENTAIRE = ?,");
-			sb.append(" APTITUDE = ?");
-			sb.append(" WHERE license = ?");
-
-			PreparedStatement st = conex.prepareStatement(sb.toString());
-			st.setString(1, resource.getNiveau());
-			st.setString(2, resource.getTelephone());
-			st.setString(3, resource.getMail());
-			if (resource.isEncadrent()) {
-				st.setString(4, resource.getEncadrement());
-			} else {
-				st.setString(4, null);
-			}
-			if (resource.isPilote()) {
-				st.setInt(5, 1);
-			} else {
-				st.setInt(5, 0);
-			}
-			st.setInt(6, resource.getActifInt());
-			st.setString(7, resource.getNom());
-			st.setString(8, resource.getPrenom());
-			Timestamp ts = new Timestamp(resource.getDateCM().getTime());
-			st.setTimestamp(9, ts);
-			st.setInt(10, resource.getAnneeCotisation());
-			if (resource.isTiv()) {
-				st.setInt(11, 1);
-			} else {
-				st.setInt(11, 0);
-			}
-			st.setString(12, resource.getCommentaire());
-			if (resource.isAptitude()) {
-				st.setString(13, resource.getAptitude());
-			} else {
-				st.setString(13, null);
-			}
-			st.setString(14, resource.getNumeroLicense());
-			if (st.executeUpdate() == 0) {
-				throw new TechnicalException(Technical.GENERIC, "L'adhérent n'a pu être modifié");
-			}
-
+			StringBuffer sql = new StringBuffer();
+			sql.append("UPDATE ADHERENT");
+			sql.append(" SET NIVEAU = ?,");
+			sql.append(" TELEPHONE = ?,");
+			sql.append(" MAIL = ?,");
+			sql.append(" ENCADRANT = ?,");
+			sql.append(" PILOTE = ?,");
+			sql.append(" ACTIF = ?,");
+			sql.append(" NOM = ?,");
+			sql.append(" PRENOM = ?,");
+			sql.append(" DATE_CM = ?,");
+			sql.append(" ANNEE_COTI = ?,");
+			sql.append(" TIV = ?,");
+			sql.append(" COMMENTAIRE = ?,");
+			sql.append(" APTITUDE = ?");
+			sql.append(" WHERE license = ?");
+			// update de l'adherent
+			jdbcTemplate.update(connection -> {
+				PreparedStatement ps = connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);
+				ps.setString(1, resource.getNiveau());
+				ps.setString(2, resource.getTelephone());
+				ps.setString(3, resource.getMail());
+				if (resource.isEncadrent()) {
+					ps.setString(4, resource.getEncadrement());
+				} else {
+					ps.setString(4, null);
+				}
+				if (resource.isPilote()) {
+					ps.setInt(5, 1);
+				} else {
+					ps.setInt(5, 0);
+				}
+				ps.setInt(6, resource.getActifInt());
+				ps.setString(7, resource.getNom());
+				ps.setString(8, resource.getPrenom());
+				Timestamp ts = new Timestamp(resource.getDateCM().getTime());
+				ps.setTimestamp(9, ts);
+				ps.setInt(10, resource.getAnneeCotisation());
+				if (resource.isTiv()) {
+					ps.setInt(11, 1);
+				} else {
+					ps.setInt(11, 0);
+				}
+				ps.setString(12, resource.getCommentaire());
+				if (resource.isAptitude()) {
+					ps.setString(13, resource.getAptitude());
+				} else {
+					ps.setString(13, null);
+				}
+				ps.setString(14, resource.getNumeroLicense());
+				return ps;
+			}, keyHolder);
 			// gestion des roles 1er temps : on supprime les roles
-			sb = new StringBuffer();
-			sb.append("DELETE FROM REL_ADHERENT_ROLES WHERE ADHERENT_LICENSE = ? ");
-			PreparedStatement st1 = conex.prepareStatement(sb.toString());
-			st1.setString(1, resource.getNumeroLicense());
-			if (st1.executeUpdate() == 0) {
-				LOGGER.info("Impossible de supprimer les roles de l'adherent dans la table de relation");
-			} else {
-				LOGGER.info("suppression des roles de l'adherent [" + resource.getNumeroLicense()
-						+ "] dans la table de relation");
-			}
-
-			// gestion des roles 2ieme temps : on les re-creer
-			Iterator<Roles> itRoles = resource.getRoles().iterator();
-			sb = new StringBuffer();
-			while (itRoles.hasNext()) {
-				sb.append("INSERT INTO REL_ADHERENT_ROLES (`ADHERENT_LICENSE`, `ROLES_idROLES`)");
-				sb.append(" VALUES (?, ?)");
-				PreparedStatement strole = conex.prepareStatement(sb.toString());
-				strole.setString(1, resource.getNumeroLicense());
-				Adherent.Roles role = itRoles.next();
-				int id = getIdRole(role.name());
-				strole.setInt(2, id);
-				if (strole.executeUpdate() == 0) {
-					throw new TechnicalException(Technical.GENERIC, "Le role n'a pu être enregistré");
-				}
-				sb = null;
-				sb = new StringBuffer();
-			}
-
-			// Mise à jour des contacts
-			// 1er temps :vérification de l'existance des contacts à mettre à jour
-			for (String contactId : resource.getContacts()) {
-				// ContactUrgent contact = getContactUrgentById(contactId);
-				ContactUrgent contact = contactUrgentDao.get(contactId);
-
-				if (null == contact) {
-					// Problème ce nouveau contact n'existe pas
-					throw new FunctionalException(Functional.AUTHENTICATION,
-							"Le contactUrgent id [" + contactId + "] n'a pas pu etre ajouter : existe pas ");
-				}
-			}
-			// 2ieme temps : on supprime les contact existant dans la table de relation
-			sb = new StringBuffer();
-			sb.append("DELETE FROM REL_ADHERENT_CONTACT WHERE ADHERENT_LICENSE = ? ");
-			PreparedStatement stContact = conex.prepareStatement(sb.toString());
-			stContact.setString(1, resource.getNumeroLicense());
-			if (stContact.executeUpdate() == 0) {
-				LOGGER.info("Impossible de supprimer les contact de l'adherent dans la table de relation");
-			} else {
-				LOGGER.info("suppression des contacts de l'adherent [" + resource.getNumeroLicense()
-						+ "] dans la table de relation");
-			}
-
-			// 3ieme temps : on re-cree les contacts dans la table de relation
-			sb = new StringBuffer();
-			for (String contactId : resource.getContacts()) {
-				sb.append("INSERT INTO REL_ADHERENT_CONTACT (`ADHERENT_LICENSE`, `CONTACT_URGENT_IDCONTACT`)");
-				sb.append(" VALUES (?, ?)");
-				PreparedStatement st2 = conex.prepareStatement(sb.toString());
-				st2.setString(1, resource.getNumeroLicense());
-				st2.setString(2, contactId);
-				if (st2.executeUpdate() == 0) {
-					throw new TechnicalException(Technical.GENERIC, "Le contact n'a pu être enregistré");
-				}
-				sb = null;
-				sb = new StringBuffer();
-			}
-
-			// updateContactsForAdherent(resource.getNumeroLicense());
-
-			return resource;
-		} catch (SQLException e) {
-			LOGGER.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+			// // Mise à jour des contacts
+		} catch (DataAccessException e) {
+			throw new TechnicalException(Technical.GENERIC, "Pb modification Adherent :" + resource.getNumeroLicense()
+					+ ", " + resource.getNom() + ", " + resource.getPrenom() + "erreur : " + e.getMessage());
 		}
+
+		return resource;
+
 	}
 
 	@Override
@@ -342,10 +271,50 @@ public class AdherentDaoImpl implements AdherentDao {
 
 	}
 
+	@Override
+	public void createRoleForAdherent(String numeroDeLicense, Roles role) {
+		try {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			StringBuffer sql2 = new StringBuffer();
+			sql2.append("INSERT INTO REL_ADHERENT_ROLES (`ADHERENT_LICENSE`, `ROLES_idROLES`)");
+			sql2.append(" VALUES (?, ?)");
+			jdbcTemplate.update(connection -> {
+				PreparedStatement ps = connection.prepareStatement(sql2.toString(), Statement.RETURN_GENERATED_KEYS);
+				ps.setString(1, numeroDeLicense);
+				int id = getIdRole(role.name());
+				ps.setInt(2, id);
+				return ps;
+			}, keyHolder);
+		} catch (DataAccessException e) {
+			throw new TechnicalException(Technical.GENERIC, "Pb creation table relation REL_ADHERENT_ROLES : ["
+					+ numeroDeLicense + "], [" + role.name() + "] erreur : " + e.getMessage());
+		}
+
+	}
+
+	@Override
+	public void deleteRoleForAdherent(String numeroDeLicense, Roles role) {
+		try {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			StringBuffer sql1 = new StringBuffer();
+			sql1.append("DELETE FROM REL_ADHERENT_ROLES WHERE ADHERENT_LICENSE = ?  and ROLES_idROLES = ?");
+			jdbcTemplate.update(connection -> {
+				PreparedStatement ps = connection.prepareStatement(sql1.toString(), Statement.RETURN_GENERATED_KEYS);
+				ps.setString(1, numeroDeLicense);
+				int id = getIdRole(role.name());
+				ps.setInt(2, id);
+				return ps;
+			}, keyHolder);
+		} catch (DataAccessException e) {
+			throw new TechnicalException(Technical.GENERIC, "Pb suppression table relation REL_ADHERENT_ROLES : ["
+					+ numeroDeLicense + "], [" + role.name() + "] erreur : " + e.getMessage());
+		}
+	}
+
 	public List<String> getStrRoles(String adherentId) {
 		StringBuffer sql = new StringBuffer("SELECT r.LIBELLE FROM REL_ADHERENT_ROLES rel, ROLES r ");
 		sql.append(" where rel.ROLES_idROLES = r.idROLES ");
-		sql.append(" and rel.ADHERENT_LICENSE = "+adherentId);
+		sql.append(" and rel.ADHERENT_LICENSE = '" + adherentId + "'");
 		try {
 			List<String> rolesId = new ArrayList<>();
 			rolesId = jdbcTemplate.queryForList(sql.toString(), String.class);
@@ -355,20 +324,20 @@ public class AdherentDaoImpl implements AdherentDao {
 		}
 	}
 
-	public int getIdRole(String libelle) throws TechnicalException {
-		StringBuffer sb = new StringBuffer("select idRoles from ROLES where libelle = '"+libelle+"'");
+	public int getIdRole(String libelle) {
+		StringBuffer sb = new StringBuffer("select idRoles from ROLES where libelle = '" + libelle + "'");
 		try {
 			Integer rID = jdbcTemplate.queryForObject(sb.toString(), Integer.class);
 			return rID.intValue();
-		} catch(DataAccessException e) {
+		} catch (DataAccessException e) {
 			throw new NotFoundException(NotFound.GENERIC, "PB Avec le getIdRole()  [" + e.getMessage() + "]");
 		}
 	}
 
-	public List<String> getContacts(String adherentId) throws TechnicalException {
+	public List<String> getContacts(String adherentId) {
 		StringBuffer sql = new StringBuffer(" SELECT cu.idCONTACT ");
 		sql.append(" FROM REL_ADHERENT_CONTACT rel , CONTACT_URGENT cu");
-		sql.append(" where rel.ADHERENT_LICENSE = "+adherentId);
+		sql.append(" where rel.ADHERENT_LICENSE = '" + adherentId + "'");
 		sql.append(" and  rel.CONTACT_URGENT_IDCONTACT = cu.IDCONTACT");
 		sql.append(" order by cu.IDCONTACT");
 		try {
@@ -377,6 +346,43 @@ public class AdherentDaoImpl implements AdherentDao {
 			return contactsId;
 		} catch (DataAccessException e) {
 			throw new FunctionalException(Functional.GENERIC, "PB Avec le getContacts  [" + e.getMessage() + "]");
+		}
+	}
+
+	@Override
+	public void deleteContactForAdherent(String numeroDeLicense, String contactId) {
+		try {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			StringBuffer sql3 = new StringBuffer();
+			sql3.append("DEL FROM REL_ADHERENT_CONTACT WHERE ADHERENT_LICENSE = ? and CONTACT_URGENT_IDCONTACT =  ?");
+			jdbcTemplate.update(connection -> {
+				PreparedStatement ps = connection.prepareStatement(sql3.toString(), Statement.RETURN_GENERATED_KEYS);
+				ps.setString(1, numeroDeLicense);
+				ps.setString(2, contactId);
+				return ps;
+			}, keyHolder);
+		} catch (DataAccessException e) {
+			throw new TechnicalException(Technical.GENERIC, "Pb Suppression des Contacts table REL_ADHERENT_CONTACT :"
+					+ numeroDeLicense + "], [" + contactId + "] erreur : " + e.getMessage());
+		}
+	}
+
+	@Override
+	public void createContactForAdherent(String numeroDeLicense, String contactId) {
+		try {
+			KeyHolder keyHolder = new GeneratedKeyHolder();
+			StringBuffer sql4 = new StringBuffer();
+			sql4.append("INSERT INTO REL_ADHERENT_CONTACT (`ADHERENT_LICENSE`, `CONTACT_URGENT_IDCONTACT`)");
+			sql4.append(" VALUES (?, ?)");
+			jdbcTemplate.update(connection -> {
+				PreparedStatement ps = connection.prepareStatement(sql4.toString(), Statement.RETURN_GENERATED_KEYS);
+				ps.setString(1, numeroDeLicense);
+				ps.setString(2, contactId);
+				return ps;
+			}, keyHolder);
+		} catch (DataAccessException e) {
+			throw new TechnicalException(Technical.GENERIC, "Pb Creation des Contacts table REL_ADHERENT_CONTACT :"
+					+ numeroDeLicense + "], [" + contactId + "] erreur : " + e.getMessage());
 		}
 	}
 

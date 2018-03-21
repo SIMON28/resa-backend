@@ -287,7 +287,21 @@ public class Adherent implements Serializable {
 	 * @return
 	 */
 	public boolean isVesteRouge() {
-		return ((getEncadrement() != null || isDp() || isPilote()) && getActifInt() == 1);
+		boolean vesteRouge = false;
+		if (getActifInt() == 1) {
+			if (getEncadrement() != null) {
+				vesteRouge=true;
+			}
+			if (isDp()) {
+				vesteRouge=true;
+			}
+			if (isPilote()) {
+				vesteRouge=true;
+			}
+		}
+		// return ( (getEncadrement() != null || isDp() || isPilote() ) && getActifInt()
+		// == 1);
+		return vesteRouge;
 	}
 
 	public void setDp(boolean dp) {
@@ -378,7 +392,7 @@ public class Adherent implements Serializable {
 		if (null != dateCM) {
 			return dateCM;
 		} else {
-			return new Date(1900,1,1);
+			return new Date(1900, 1, 1);
 		}
 	}
 

@@ -1,50 +1,38 @@
 package com.asptt.resabackend.resources.contacturgent;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.sql.DataSource;
 import javax.ws.rs.core.MultivaluedMap;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
+import com.asptt.resa.commons.exception.NotFound;
+import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.Technical;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.entity.ContactUrgent;
-import com.asptt.resabackend.mapper.WrapperDaoEntity;
+import com.asptt.resabackend.mapper.ContactRowMapper;
+import com.asptt.resabackend.mapper.SqlSearchCriteria;
+import com.asptt.resabackend.resources.NomResources;
+import com.asptt.resabackend.util.ResaUtil;
+import com.mysql.jdbc.Statement;
 
 @Repository("contactDao")
 public class ContactDaoImpl implements ContactDao {
 
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ContactDaoImpl.class);
 
+
 	@Autowired
-	private DataSource dataSource;
-
-	public DataSource getDataSource() {
-		return dataSource;
-	}
-
-	public void setDataSource(DataSource dataSource) {
-		this.dataSource = dataSource;
-	}
-
-	public void closeConnexion(Connection connexion) {
-		try {
-			if (null != connexion) {
-				connexion.close();
-			}
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, "Impossible de cloturer la connexion");
-		}
-		connexion = null;
-	}
+	private JdbcTemplate jdbcTemplate;
 
 	@Override
 	public ContactUrgent create(ContactUrgent contact) throws TechnicalException {
@@ -54,112 +42,54 @@ public class ContactDaoImpl implements ContactDao {
 
 	@Override
 	public ContactUrgent get(String id) {
-		Connection conex = null;
+		ContactUrgent contact = null;
+		StringBuffer sb = new StringBuffer();
+		sb.append("SELECT cu.idCONTACT, cu.TITRE, cu.NOM, cu.PRENOM, cu.TELEPHONE, cu.TELEPHTWO");
+		sb.append(" FROM CONTACT_URGENT cu");
+		sb.append(" where cu.IDCONTACT = ?");
 		try {
-			conex = getDataSource().getConnection();
-			StringBuffer sb = new StringBuffer();
-			sb.append("SELECT cu.idCONTACT, cu.TITRE, cu.NOM, cu.PRENOM, cu.TELEPHONE, cu.TELEPHTWO");
-			sb.append(" FROM CONTACT_URGENT cu");
-			sb.append(" where cu.IDCONTACT = ?");
-
-			PreparedStatement st = conex.prepareStatement(sb.toString());
-			st.setString(1, id);
-			ResultSet rs = st.executeQuery();
-
-			ContactUrgent contact = null;
-			while (rs.next()) {
-				contact = WrapperDaoEntity.wrapContact(rs);
-			}
+			contact = jdbcTemplate.queryForObject(sb.toString(), new ContactRowMapper(),
+					id);
 			return contact;
-
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "Aucun ContactUrgent avec l'id [" + id + "]");
 		}
 	}
 
 	@Override
 	public List<ContactUrgent> find() {
-		Connection conex = null;
+		String sql = "select * from CONTACT_URGENT order by NOM";
+		List<ContactUrgent> contacts = new ArrayList<>();
 		try {
-			conex = getDataSource().getConnection();
-			PreparedStatement st = conex.prepareStatement("select * from CONTACT_URGENT order by NOM");
-			ResultSet rs = st.executeQuery();
-			List<ContactUrgent> contactUrgents = new ArrayList<>();
-			while (rs.next()) {
-				ContactUrgent contactUrgent = WrapperDaoEntity.wrapContact(rs);
-				contactUrgents.add(contactUrgent);
-			}
-			return contactUrgents;
-		} catch (SQLException e) {
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+			contacts = jdbcTemplate.query(sql, new ContactRowMapper());
+			return contacts;
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC, "PB Avec le find() contacts [" + e.getMessage() + "]");
 		}
-
 	}
 
 	@Override
 	public List<ContactUrgent> find(MultivaluedMap<String, String> criteria) {
-		// PreparedStatement st;
-		// Connection conex = null;
-		// try {
-		// conex = getDataSource().getConnection();
-		//
-		// StringBuffer sb = new StringBuffer("select * from ADHERENT a");
-		// if (criteria.isEmpty()) {
-		// st = conex.prepareStatement(sb.toString());
-		// } else {
-		// int num = 0;
-		// Map<Integer, List<String>> parameters = new HashMap<>();
-		// for (Map.Entry<String, List<String>> entry : criteria.entrySet()) {
-		// num = num + 1;
-		// LOGGER.debug("Index=" + num + "Key : " + entry.getKey() + " Value : " +
-		// entry.getValue());
-		// List<String> ent = new ArrayList<>();
-		// ent.add(entry.getKey());
-		// ent.add(entry.getValue().get(0));
-		// parameters.put(Integer.valueOf(num), ent);
-		// }
-		// sb.append(" where ");
-		// parameters.entrySet().stream().forEach(entry -> {
-		// sb.append(" " + entry.getValue().get(0) + " LIKE ? AND ");
-		// });
-		// sb.delete(sb.length() - 5, sb.length() - 1);
-		// sb.append(" order by NOM");
-		// st = conex.prepareStatement(sb.toString());
-		// for (Map.Entry<Integer, List<String>> entry : parameters.entrySet()) {
-		// try {
-		// st.setString(entry.getKey(), entry.getValue().get(1));
-		// } catch (SQLException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// }
-		// ;
-		// }
-		// LOGGER.info("Requete SQL Find avec critera=" + st.toString());
-		// ResultSet rs = st.executeQuery();
-		// List<ContactUrgent> contactUrgents = new ArrayList<>();
-		// while (rs.next()) {
-		// ContactUrgent contactUrgent = WrapperDaoEntity.wrapContact(rs);
-		// contactUrgents.add(contactUrgent);
-		// }
-		// return contactUrgents;
-		// } catch (SQLException e) {
-		// throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		// } finally {
-		// closeConnexion(conex);
-		// }
-		return null;
+		StringBuffer sql = new StringBuffer("select * from CONTACT_URGENT cu");
+		SqlSearchCriteria param = ResaUtil.createSqlParameters(criteria, false, NomResources.CONTACTURGENT);
+		List<ContactUrgent> contacts = new ArrayList<>();
+		try {
+			if (param.getNbParam() > 0) {
+				sql.append(param.getSql());
+			}
+			LOGGER.info("requete SQL:" + sql.toString());
+			contacts = jdbcTemplate.query(sql.toString(), param.getArgs(), new ContactRowMapper());
+			return contacts;
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC,
+					"PB Avec le find(MultivaluedMap) contacts [" + e.getMessage() + "]");
+		}
 	}
 
 	@Override
 	public ContactUrgent update(ContactUrgent resource) throws TechnicalException {
-		Connection conex = null;
+		KeyHolder keyHolder = new GeneratedKeyHolder();
 		try {
-			conex = getDataSource().getConnection();
 			StringBuffer sb = new StringBuffer();
 			sb.append("UPDATE CONTACT_URGENT");
 			sb.append(" SET TITRE = ?,");
@@ -168,23 +98,21 @@ public class ContactDaoImpl implements ContactDao {
 			sb.append(" TELEPHONE = ?,");
 			sb.append(" TELEPHTWO = ?");
 			sb.append(" WHERE IDCONTACT = ?");
-
-			PreparedStatement st = conex.prepareStatement(sb.toString());
-			st.setString(1, resource.getTitre());
-			st.setString(2, resource.getNom());
-			st.setString(3, resource.getPrenom());
-			st.setString(4, resource.getTelephone());
-			st.setString(5, resource.getTelephtwo());
-			st.setInt(6, resource.getId());
-			if (st.executeUpdate() == 0) {
-				throw new TechnicalException(Technical.GENERIC,
-						"Le Contact id : " + resource.getId() + "n'a pu être mis à jour");
-			}
-		} catch (SQLException e) {
-			LOGGER.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+			// update de l'adherent
+			jdbcTemplate.update(connection -> {
+				PreparedStatement ps = connection.prepareStatement(sb.toString(), Statement.RETURN_GENERATED_KEYS);
+				ps.setString(1, resource.getTitre());
+				ps.setString(2, resource.getNom());
+				ps.setString(3, resource.getPrenom());
+				ps.setString(4, resource.getTelephone());
+				ps.setString(5, resource.getTelephtwo());
+				ps.setInt(6, resource.getId());
+				return ps;
+			}, keyHolder);
+		} catch(DataAccessException e) {
+			throw new TechnicalException(Technical.GENERIC,
+					"Le Contact id : " + resource.getId() + "n'a pu être mis à jour");
+			
 		}
 		return resource;
 	}
@@ -195,134 +123,125 @@ public class ContactDaoImpl implements ContactDao {
 
 	}
 
+	@Override
 	public List<ContactUrgent> findContactsForAdherent(String adherentId) throws TechnicalException {
-		Connection conex = null;
+		StringBuffer sql = new StringBuffer();
+		sql.append("SELECT c.idCONTACT, c.TITRE, c.NOM, c.PRENOM, c.TELEPHONE, c.TELEPHTWO");
+		sql.append(" FROM REL_ADHERENT_CONTACT rel , CONTACT_URGENT c");
+		sql.append(" WHERE rel.CONTACT_URGENT_idCONTACT = c.idCONTACT");
+		sql.append(" AND rel.ADHERENT_LICENSE = '" + adherentId + "'");
+		List<ContactUrgent> contactUrgents = new ArrayList<>();
 		try {
-			conex = getDataSource().getConnection();
-			StringBuffer sb = new StringBuffer();
-			// sb.append("SELECT c.idCONTACT, c.TITRE, c.NOM, c.PRENOM, c.TELEPHONE,
-			// c.TELEPHTWO");
-			// sb.append(" FROM REL_ADHERENT_CONTACT rel , CONTACT_URGENT c");
-			// sb.append(" WHERE rel.CONTACT_URGENT_idCONTACT = c.idCONTACT");
-			// sb.append(" AND c.NOM = ?");
-			// sb.append(" AND c.PRENOM = ?");
-			// sb.append(" AND rel.ADHERENT_LICENSE = ?");
-
-			sb.append("SELECT c.idCONTACT, c.TITRE, c.NOM, c.PRENOM, c.TELEPHONE, c.TELEPHTWO");
-			sb.append(" FROM REL_ADHERENT_CONTACT rel , CONTACT_URGENT c");
-			sb.append(" WHERE rel.CONTACT_URGENT_idCONTACT = c.idCONTACT");
-			sb.append(" AND rel.ADHERENT_LICENSE = ?");
-
-			PreparedStatement st = conex.prepareStatement(sb.toString());
-			// st.setString(1, contact.getNom());
-			// st.setString(2, contact.getPrenom());
-			st.setString(1, adherentId);
-			ResultSet rs = st.executeQuery();
-			List<ContactUrgent> contactUrgents = new ArrayList<>();
-			while (rs.next()) {
-				ContactUrgent contactUrgent = WrapperDaoEntity.wrapContact(rs);
-				contactUrgents.add(contactUrgent);
-			}
+			contactUrgents = jdbcTemplate.query(sql.toString(), new ContactRowMapper());
 			return contactUrgents;
-		} catch (SQLException e) {
-			LOGGER.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		} catch (DataAccessException e) {
+			throw new NotFoundException(NotFound.GENERIC,
+					"PB Avec le findContactsForAdherent() [" + e.getMessage() + "]");
 		}
 	}
 
-	public List<ContactUrgent> createContactsForAdherent(List<ContactUrgent> contacts, String adherentId)
-			throws TechnicalException {
-		Connection conex = null;
-		try {
-			conex = getDataSource().getConnection();
-			PreparedStatement st = null;
-			for (ContactUrgent contact : contacts) {
-				StringBuffer sb = new StringBuffer();
-				sb.append("INSERT INTO CONTACT_URGENT (`TITRE`, `NOM`, `PRENOM`, `TELEPHONE`, `TELEPHTWO`)");
-				sb.append(" VALUES (?, ?, ?, ?, ?)");
-				st = conex.prepareStatement(sb.toString());
-				st.setString(1, contact.getTitre());
-				st.setString(2, contact.getNom());
-				st.setString(3, contact.getPrenom());
-				st.setString(4, contact.getTelephone());
-				st.setString(5, contact.getTelephtwo());
-				if (st.executeUpdate() == 0) {
-					throw new TechnicalException(Technical.GENERIC,
-							"Le contact :" + contact.getNom() + "n'a pu être creé");
-				} else {
-					// on recupere l'id du contact que l'on vient de créer
-					StringBuffer sb1 = new StringBuffer();
-					sb1.append("SELECT max(idCONTACT) FROM CONTACT_URGENT c");
-					st = conex.prepareStatement(sb1.toString());
-					ResultSet rs = st.executeQuery();
-					if (rs.next()) {
-						int idContact = rs.getInt("max(idCONTACT)");
-						// On crée la relation
-						StringBuffer sb2 = new StringBuffer();
-						sb2.append("INSERT INTO REL_ADHERENT_CONTACT (`ADHERENT_LICENSE`, `CONTACT_URGENT_IDCONTACT`)");
-						sb2.append(" VALUES (?, ?)");
-						st = conex.prepareStatement(sb2.toString());
-						st.setString(1, adherentId);
-						st.setInt(2, idContact);
-						if (st.executeUpdate() == 0) {
-							throw new TechnicalException(Technical.GENERIC,
-									"La relation adherent[" + adherentId + "] le contact :" + contact.getNom() + ", "
-											+ contact.getPrenom() + "n'a pu être creé");
-						}
-					} else {
-						throw new TechnicalException(Technical.GENERIC,
-								"Imossible de recuperer le dernier contact créer");
-					}
-
+	@Override
+	public List<ContactUrgent> createContactsForAdherent(List<ContactUrgent> contacts, String adherentId) {
+		StringBuffer sql = new StringBuffer();
+		sql.append("INSERT INTO CONTACT_URGENT (`TITRE`, `NOM`, `PRENOM`, `TELEPHONE`, `TELEPHTWO`)");
+		sql.append(" VALUES (?, ?, ?, ?, ?)");
+		KeyHolder keyHolder = new GeneratedKeyHolder();
+		List<ContactUrgent> contactsCreated = new ArrayList<>();
+		for (ContactUrgent contact : contacts) {
+			// creation du ContactUrgent
+			try {
+				jdbcTemplate.update(connection -> {
+					PreparedStatement ps = connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);
+					ps.setString(1, contact.getTitre());
+					ps.setString(2, contact.getNom());
+					ps.setString(3, contact.getPrenom());
+					ps.setString(4, contact.getTelephone());
+					ps.setString(5, contact.getTelephtwo());
+					return ps;
+				}, keyHolder);
+				// recup de l'id du contact
+				Number idContact = keyHolder.getKey();
+				contact.setId(new Integer(idContact.intValue()));
+				contactsCreated.add(contact);
+				LOGGER.info("Contact creer avec l'id [" + idContact + "]");
+				StringBuffer sb2 = new StringBuffer();
+				sb2.append("INSERT INTO REL_ADHERENT_CONTACT (`ADHERENT_LICENSE`, `CONTACT_URGENT_IDCONTACT`)");
+				sb2.append(" VALUES (?, ?)");
+				try {
+					// Creation dans la table de relation
+					jdbcTemplate.update(connection -> {
+						PreparedStatement ps = connection.prepareStatement(sb2.toString());
+						ps.setString(1, adherentId);
+						ps.setInt(2, idContact.intValue());
+						return ps;
+					});
+				} catch (DataAccessException e) {
+					throw new TechnicalException(Technical.GENERIC, "Pb creation Relation Adherent-Contact :"
+							+ adherentId + ", " + contact.getNom() + "erreur : " + e.getMessage());
 				}
+			} catch (DataAccessException e) {
+				throw new TechnicalException(Technical.GENERIC, "Pb creation Contact :" + contact.getNom() + ", "
+						+ contact.getPrenom() + "erreur : " + e.getMessage());
 			}
-		} catch (SQLException e) {
-			LOGGER.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
+		}
+		return contactsCreated;
+	}
+
+	@Override
+	public List<ContactUrgent> updateContactsForAdherent(List<ContactUrgent> contacts, String adherentId) {
+		KeyHolder keyHolder = new GeneratedKeyHolder();
+		// 1ieme temps : on supprime les contact existant dans la table de relation
+		try {
+			StringBuffer sql = new StringBuffer();
+			sql.append("DELETE FROM REL_ADHERENT_CONTACT WHERE ADHERENT_LICENSE = ? ");
+			jdbcTemplate.update(connection -> {
+				PreparedStatement ps = connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);
+				ps.setString(1, adherentId);
+				return ps;
+			}, keyHolder);
+			// 2ieme temps : on re-cree les contacts
+			createContactsForAdherent(contacts, adherentId);
+		} catch (DataAccessException e) {
+			throw new TechnicalException(Technical.GENERIC,
+					"Pb modification Contact pour l'adherent :" + adherentId + ",  erreur : " + e.getMessage());
 		}
 		return contacts;
 	}
 
+	@Override
 	public void deleteContactsForAdherent(String adherentId) throws TechnicalException {
-		Connection conex = null;
-		try {
-			List<ContactUrgent> contacts = findContactsForAdherent(adherentId);
-			conex = getDataSource().getConnection();
-			PreparedStatement st = null;
-			for (ContactUrgent contact : contacts) {
-				StringBuffer sb = new StringBuffer();
-				sb.append("DELETE FROM REL_ADHERENT_CONTACT");
-				sb.append(" WHERE ADHERENT_LICENSE = ?");
-				sb.append(" AND CONTACT_URGENT_IDCONTACT = ?");
-				st = conex.prepareStatement(sb.toString());
-				st.setString(1, adherentId);
-				st.setInt(2, contact.getId());
-				if (st.executeUpdate() == 0) {
-					throw new TechnicalException(Technical.GENERIC, "La relation contact :" + contact.getNom()
-							+ " adherent [" + adherentId + "] n'a pu être supprimée");
-				} else {
-					// On supprime le contact
-					StringBuffer sb2 = new StringBuffer();
-					sb2.append("DELETE FROM CONTACT_URGENT");
-					sb2.append(" WHERE IDCONTACT = ?");
-					st = conex.prepareStatement(sb2.toString());
-					st.setInt(1, contact.getId());
-					if (st.executeUpdate() == 0) {
-						throw new TechnicalException(Technical.GENERIC, "La contact :" + contact.getNom() + ", "
-								+ contact.getPrenom() + "n'a pu être supprimé");
-					}
-
+		StringBuffer sql = new StringBuffer();
+		sql.append("DELETE FROM REL_ADHERENT_CONTACT");
+		sql.append(" WHERE ADHERENT_LICENSE = ?");
+		sql.append(" AND CONTACT_URGENT_IDCONTACT = ?");
+		List<ContactUrgent> contacts = findContactsForAdherent(adherentId);
+		for (ContactUrgent contact : contacts) {
+			// On supprime dans la table de relation
+			try {
+				jdbcTemplate.update(connection -> {
+					PreparedStatement ps = connection.prepareStatement(sql.toString());
+					ps.setString(1, adherentId);
+					ps.setInt(2, contact.getId());
+					return ps;
+				});
+				// On supprime le contact
+				StringBuffer sb2 = new StringBuffer();
+				sb2.append("DELETE FROM CONTACT_URGENT");
+				sb2.append(" WHERE IDCONTACT = ?");
+				try {
+					jdbcTemplate.update(connection -> {
+						PreparedStatement ps = connection.prepareStatement(sb2.toString());
+						ps.setInt(1, contact.getId());
+						return ps;
+					});
+				} catch (DataAccessException e) {
+					throw new TechnicalException(Technical.GENERIC, "Pb suppression Contact :" + contact.getId() + ", "
+							+ contact.getNom() + "erreur : " + e.getMessage());
 				}
+			} catch (DataAccessException e) {
+				throw new TechnicalException(Technical.GENERIC, "Pb suppression  table Relation Adherent-Contact :"
+						+ adherentId + ", " + contact.getId() + "erreur : " + e.getMessage());
 			}
-		} catch (SQLException e) {
-			LOGGER.error(e.getMessage(), e);
-			throw new TechnicalException(Technical.GENERIC, e.getMessage());
-		} finally {
-			closeConnexion(conex);
 		}
 	}
 

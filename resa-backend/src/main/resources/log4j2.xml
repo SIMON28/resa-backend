@@ -12,7 +12,7 @@
 			<AppenderRef ref="Console-Appender" />
 		</Logger>
 		<Root>
-			<AppenderRef ref="Console-Appender" />
+			<AppenderRef ref="Console-Appender" catego="DEBUG"/>
 		</Root>
 	</Loggers>
 	<Appenders>
@@ -25,9 +25,9 @@
 			</PatternLayout>
 		</Console>
 
-		<!-- 2. File Appender with file "${path}/resaPlongee_log.log" 
+		<!-- 2. File Appender with file "${path}/resaPlongee.log"--> 
 		<RollingFile name="App-Appender" 
-			fileName="${path}/resaPlongee_log.log" 
+			fileName="${path}/resaPlongee.log" 
 			filePattern="${path}/resaPlongee_%d{MM-dd-yyyy-HH-mm}.log"
 			ignoreExceptions="false">
 			<PatternLayout>
@@ -35,25 +35,38 @@
 					[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{5} - %msg%n
 				</pattern>
 			</PatternLayout>
-			<TimeBasedTriggeringPolicy />
-		</RollingFile>-->
+			<TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+		</RollingFile>
 
-		<!-- 2. File Appender with file "${path}/resaPlongee_log.log" -->
+		<!-- 3. File Appender with file "${path}/resaPlongee.log"--> 
+		<RollingFile name="SpringBoot-Appender" 
+			fileName="${path}/springBootPlongee.log" 
+			filePattern="${path}/springBoot_%d{MM-dd-yyyy-HH-mm}.log"
+			ignoreExceptions="false">
+			<PatternLayout>
+				<pattern>
+					[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{5} - %msg%n
+				</pattern>
+			</PatternLayout>
+			<TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+		</RollingFile>
+
+		<!-- 2. File Appender with file "${path}/resaPlongee_log.log" 
 		<File name="App-Appender" fileName="${path}/resaPlongee_log.log">
 			<PatternLayout>
 				<pattern>
 					[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{5} - %msg%n
 				</pattern>
 			</PatternLayout>
-		</File>
+		</File>-->
 
-		<!-- 3. File Appender with file "${path}/springboot_log.log" -->
+		<!-- 3. File Appender with file "${path}/springboot_log.log" 
 		<File name="SpringBoot-Appender" fileName="${path}/springboot_log.log">
 			<PatternLayout>
 				<pattern>
 					[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{5} - %msg%n
 				</pattern>
 			</PatternLayout>
-		</File>
+		</File>-->
 	</Appenders>
 </Configuration>

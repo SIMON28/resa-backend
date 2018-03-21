@@ -51,7 +51,7 @@ public class AdherentServiceImplTest {
 		}
 	}
 
-//	@Test
+	@Test
 	public void create() {
 		Adherent adh = new Adherent();
 		adh.setNumeroLicense("unnumero");
@@ -63,7 +63,7 @@ public class AdherentServiceImplTest {
 		adh.setMail("test.test@orange.fr");
 		adh.setEncadrement(null);
 		adh.setPilote(false);
-		adh.setActif(false);
+		adh.setActif(true);
 		adh.setTiv(false);
 		adh.setDateCM(new Date());
 		adh.setAnneeCotisation(2000);
@@ -82,19 +82,20 @@ public class AdherentServiceImplTest {
 		} catch (TechnicalException e) {
 			LOGGER.debug("creation d'un adherent plantée"+e.getMessage());
 		} catch (FunctionalException f) {
+			LOGGER.debug("Creation Impossible,"+f.getMessage());
 			Assert.assertEquals("Creation Impossible, l'adherent avec le numero de license [unnumero] existe déjà", f.getMessage());
 		}
 	}
 
-//	@Test
+	@Test
 	public void update() {
 		Adherent adh = new Adherent();
-		adh.setNumeroLicense("999998");
+//		adh.setNumeroLicense("");
 		adh.setNiveau(NiveauAutonomie.BATM.name());
 		adh.setNom("ACCUEIL");
 		adh.setPrenom("toto");
 		adh.setEnumNiveau(NiveauAutonomie.P0);
-		adh.setTelephone("0491163590");
+		adh.setTelephone("0123456789");
 		adh.setMail("titi.toto@orange.fr");
 		adh.setEncadrement(null);
 		adh.setPilote(false);
@@ -113,7 +114,7 @@ public class AdherentServiceImplTest {
 		adh.setContacts(contacts);
 		
 		try {
-			Adherent adhUpdated = adherentService.update(adh);
+			Adherent adhUpdated = adherentService.update("999998",adh);
 			Assert.assertEquals("toto", adhUpdated.getPrenom());
 			Assert.assertEquals(adh, adhUpdated);
 			LOGGER.info("On a bien une mise à jour");
@@ -135,7 +136,7 @@ public class AdherentServiceImplTest {
 		Assert.assertEquals(contacts, contactCreated);
 	}
 
-//	@Test
+	@Test
 	public void deleteContactUrgent() {
 		adherentService.deleteContacts("unnumero");
 	}

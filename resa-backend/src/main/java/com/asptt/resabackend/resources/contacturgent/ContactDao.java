@@ -14,4 +14,6 @@ public interface ContactDao extends Dao<ContactUrgent> {
 
 	void deleteContactsForAdherent(String adherentId);
 
+	List<ContactUrgent> updateContactsForAdherent(List<ContactUrgent> contacts, String adherentId);
+
 }

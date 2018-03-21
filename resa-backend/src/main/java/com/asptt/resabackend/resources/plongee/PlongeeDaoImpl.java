@@ -35,30 +35,8 @@ public class PlongeeDaoImpl implements PlongeeDao {
 	private Environment env;
 
 	@Autowired
-	private JdbcTemplate jdbcTemplate;;
+	private JdbcTemplate jdbcTemplate;
 
-//	@Autowired
-//	private DataSource dataSource;
-//
-//	public DataSource getDataSource() {
-//		return dataSource;
-//	}
-//
-//	public void setDataSource(DataSource dataSource) {
-//		this.dataSource = dataSource;
-//	}
-//
-//	public void closeConnexion(Connection connexion) {
-//		try {
-//			if (null != connexion) {
-//				connexion.close();
-//			}
-//		} catch (SQLException e) {
-//			throw new TechnicalException(Technical.GENERIC, "Impossible de cloturer la connexion");
-//		}
-//		connexion = null;
-//	}
-//
 	@Override
 	public Plongee create(Plongee resource) {
 		// TODO Auto-generated method stub
@@ -82,7 +60,7 @@ public class PlongeeDaoImpl implements PlongeeDao {
 
 	@Override
 	public List<Plongee> find() {
-		String limit = env.getProperty("plongee.limit");
+		String limit = env.getProperty("pagination.limit");
 		String sql = "select * from PLONGEE order by DATE_PLONGEE desc LIMIT " + limit;
 		List<Plongee> plongees = new ArrayList<>();
 		try {
@@ -130,9 +108,9 @@ public class PlongeeDaoImpl implements PlongeeDao {
 		SqlSearchCriteria param = ResaUtil.createSqlParameters(criteria, false, NomResources.PLONGEE);
 		List<Plongee> plongees = new ArrayList<>();
 		try {
-			if (param.getNbParam() > 0) {
+//			if (param.getNbParam() > 0) {
 				sql.append(param.getSql());
-			}
+//			}
 			LOGGER.info("requete SQL:" + sql.toString());
 			plongees = jdbcTemplate.query(sql.toString(), param.getArgs(), new PlongeeRowMapper());
 			// population des participants + attente
@@ -150,7 +128,6 @@ public class PlongeeDaoImpl implements PlongeeDao {
 	public Plongee update(Plongee resource) {
 		Connection conex = null;
 		try {
-//			conex = getDataSource().getConnection();
 			StringBuffer sb = new StringBuffer();
 			sb.append("UPDATE ADHERENT");
 			sb.append(" SET NIVEAU = ?,");
@@ -252,54 +229,6 @@ public class PlongeeDaoImpl implements PlongeeDao {
 
 	}
 
-	// private Plongee wrapPlongee(ResultSet rs) throws SQLException,
-	// TechnicalException {
-	// int id = rs.getInt("idPLONGEES");
-	// Date datePlongee = rs.getTimestamp("DATE_PLONGEE");
-	// Date dateReservation = rs.getTimestamp("DATE_RESERVATION");
-	// TypePlongee typePlongee = TypePlongee.valueOf(rs.getString("TYPEPLONGEE"));
-	// String nMin = rs.getString("NIVEAU_MINI");
-	// NiveauAutonomie niveauMini = NiveauAutonomie.P0;
-	// if (null != nMin) {
-	// niveauMini = NiveauAutonomie.valueOf(nMin);
-	// }
-	// int ouvertForcee = rs.getInt("OUVERTURE_FORCEE");
-	// int nbMaxPlongeur = rs.getInt("NB_MAX_PLG");
-	// String warning = rs.getString("WARNING");
-	// if (null == warning) {
-	// warning = "";
-	// }
-	// Plongee plongee = new Plongee();
-	// plongee.setId(id);
-	// plongee.setTypePlongee(typePlongee);
-	// // Mise à jour de la date
-	// // maj de l'heure de la plongée en fonction du type
-	// GregorianCalendar gc = new GregorianCalendar();
-	// gc.setTime(datePlongee);
-	// gc.set(GregorianCalendar.MINUTE, 0);
-	// gc.set(GregorianCalendar.SECOND, 0);
-	// plongee.setDatePlongee(datePlongee);
-	// plongee.setDateReservation(dateReservation);
-	// plongee.setEnumNiveauMinimum(niveauMini);
-	// plongee.setNbMaxPlaces(nbMaxPlongeur);
-	// if (ouvertForcee == 1) {
-	// plongee.setOuvertureForcee(true);
-	// } else {
-	// plongee.setOuvertureForcee(false);
-	// }
-	// List<String> participants = getAdherentsInscrits(id, null, null, null);
-	// plongee.setParticipants(participants);
-	// // plongee.setDp();
-	// // for (Adherent a : participants) {
-	// // if (a.isPilote()) {
-	// // plongee.setPilote(a);
-	// // }
-	// // }
-	// List<String> attente = getAdherentsWaiting(id);
-	// plongee.setParticipantsEnAttente(attente);
-	// plongee.setWarning(warning);
-	// return plongee;
-	// }
 
 	/**
 	 * Donne la liste des adherents inscrits à la plongée
@@ -355,7 +284,7 @@ public class PlongeeDaoImpl implements PlongeeDao {
 	 * @throws FunctionalException
 	 */
 	public List<String> getAdherentsWaiting(Integer plongeeId) throws TechnicalException {
-		StringBuffer sql = new StringBuffer("select * from PLONGEE p, LISTE_ATTENTE la, ADHERENT a ");
+		StringBuffer sql = new StringBuffer("select a.LICENSE from PLONGEE p, LISTE_ATTENTE la, ADHERENT a ");
 			sql.append(" where idPLONGEES = "+plongeeId);
 			sql.append(" and idPLONGEES = PLONGEES_idPLONGEES ");
 			sql.append(" and ADHERENT_LICENSE = LICENSE ");
