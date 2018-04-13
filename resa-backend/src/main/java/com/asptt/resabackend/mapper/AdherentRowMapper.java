@@ -5,12 +5,13 @@ import java.sql.SQLException;
 import java.util.Date;
 
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.Adherent.Encadrement;
 import com.asptt.resabackend.entity.Aptitude;
 import com.asptt.resabackend.entity.NiveauAutonomie;
-
+@Component
 public class AdherentRowMapper implements RowMapper<Adherent> {
 
 	@Override

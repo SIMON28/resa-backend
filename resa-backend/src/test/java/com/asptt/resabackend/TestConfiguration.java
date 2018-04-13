@@ -17,7 +17,7 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
  *
  */
 @Configuration
-@PropertySource(value={"classpath:application-test.properties"})
+@PropertySource({"classpath:application-test.properties","classpath:properties/ResaPlongee.properties","classpath:properties/InscriptionPlongeePage.properties"})
 @ConfigurationProperties(prefix = "spring.datasource")
 public class TestConfiguration {
 

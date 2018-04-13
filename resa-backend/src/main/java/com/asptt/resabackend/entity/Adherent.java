@@ -217,10 +217,6 @@ public class Adherent implements Serializable {
 		}
 	}
 
-	public void setAptitudeFS(String patitudeFS) {
-
-	}
-
 	public void setEnumAptitude(Aptitude aptitude) {
 		if (null == aptitude || aptitude.getText().equals("")) {
 			this.aptitude = null;

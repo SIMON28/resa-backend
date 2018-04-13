@@ -14,6 +14,7 @@ import com.asptt.resa.commons.service.ServiceBase;
 import com.asptt.resabackend.entity.Adherent;
 //import com.asptt.resabackend.commons.service.ServiceBaseResa;
 import com.asptt.resabackend.entity.Plongee;
+import com.asptt.resabackend.entity.TypeActionReturnPlongee;
 import com.asptt.resabackend.resources.adherent.AdherentService;
 
 @Service("plongeeService")
@@ -94,9 +95,21 @@ public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeS
 	}
 
 	@Override
-	public List<Plongee> findPlongeeForAdherent() {
-		List<Plongee> plongees = getDao().findPlongeeForAdherent();
+	public List<Plongee> findPlongeeForAdherent(TypeActionReturnPlongee action) {
+		List<Plongee> plongees = getDao().findPlongeeForAdherent(action);
 		return setDpPilote(plongees);
+	}
+
+	@Override
+	public List<String> getAdherentsInscrits(Integer plongeeId, Object object, Object object2, Object object3) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<String> getAdherentsWaiting(Integer plongeeId) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

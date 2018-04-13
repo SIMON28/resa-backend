@@ -1,5 +1,6 @@
 package com.asptt.resabackend.resources.plongee;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 
 import org.junit.Assert;
@@ -16,6 +17,7 @@ import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.ApplicationTest;
 import com.asptt.resabackend.entity.Plongee;
+import com.asptt.resabackend.util.ResaBackendMessage;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = ApplicationTest.class)
@@ -41,6 +43,7 @@ public class PlongeeServiceImplTest {
 		} catch (NotFoundException e) {
 			LOGGER.info("Plongee non trouve");
 			Assert.assertEquals("404-0", e.getCategory() + "-" + e.getCode().getCode());
+			Assert.assertEquals(MessageFormat.format(ResaBackendMessage.PLONGEE_NOT_FOUND,"99999999"), e.getMessage());
 		}
 	}
 

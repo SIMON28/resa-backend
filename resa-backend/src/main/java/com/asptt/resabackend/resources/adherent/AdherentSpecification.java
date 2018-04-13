@@ -1,9 +1,12 @@
 package com.asptt.resabackend.resources.adherent;
 
+import org.springframework.stereotype.Component;
+
 import com.asptt.resa.commons.json.JsonRepresentation;
 import com.asptt.resa.commons.json.MappingTable;
 import com.asptt.resa.commons.service.EditionPolicy;
 
+@Component
 public class AdherentSpecification {
 
 	private static JsonRepresentation adherentLightView;

@@ -3,6 +3,7 @@ package com.asptt.resabackend.resources.plongee;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,9 +23,11 @@ import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.Technical;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.entity.Plongee;
+import com.asptt.resabackend.entity.TypeActionReturnPlongee;
 import com.asptt.resabackend.mapper.PlongeeRowMapper;
 import com.asptt.resabackend.mapper.SqlSearchCriteria;
 import com.asptt.resabackend.resources.NomResources;
+import com.asptt.resabackend.util.ResaBackendMessage;
 import com.asptt.resabackend.util.ResaUtil;
 
 @Repository("plongeeDao")
@@ -53,7 +56,7 @@ public class PlongeeDaoImpl implements PlongeeDao {
 			plongee.setParticipantsEnAttente(getAdherentsWaiting(new Integer(id)));
 			return plongee;
 		} catch (DataAccessException e) {
-			throw new NotFoundException(NotFound.GENERIC, "Aucune plongée avec l'id [" + id + "]");
+			throw new NotFoundException(NotFound.GENERIC, MessageFormat.format(ResaBackendMessage.PLONGEE_NOT_FOUND,id));
 		}
 
 	}
@@ -326,10 +329,13 @@ public class PlongeeDaoImpl implements PlongeeDao {
 	}
 
 	@Override
-	public List<Plongee> findPlongeeForAdherent() {
+	public List<Plongee> findPlongeeForAdherent(TypeActionReturnPlongee action) {
 		StringBuilder sb = new StringBuilder("SELECT * FROM PLONGEE p");
 		sb.append(" WHERE OUVERTURE_FORCEE=1");
 		sb.append(" and DATE_PLONGEE > CURRENT_TIMESTAMP()");
+        if(action == TypeActionReturnPlongee.RESERVER){
+            sb.append(" and now() >= DATE_RESERVATION");
+        }
 		sb.append(" ORDER BY DATE_PLONGEE");
 		List<Plongee> plongees = new ArrayList<>();
 		try {

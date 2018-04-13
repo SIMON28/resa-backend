@@ -8,10 +8,13 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.asptt.resa.commons.resource.Resource;
+import com.asptt.resabackend.business.ResaBusiness;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.ContactUrgent;
 
 public interface AdherentResource extends Resource<Adherent> {
+
+	ResaBusiness getResaBusiness();
 
 	Response findContacts(final @Context UriInfo uriInfo,
 			final @PathParam("adherentId") String adherentId);
@@ -21,5 +24,9 @@ public interface AdherentResource extends Resource<Adherent> {
 	Response deleteContacts(UriInfo uriInfo, String adherentId);
 
 	Response findPlongees(UriInfo uriInfo, String adherentId);
+
+//	Response inscrireToDive(UriInfo uriInfo, String adherentId, Integer plongeeId);
+//
+//	Response registerForDive(UriInfo uriInfo, String adherentId, final @RequestBody OrderForDive order);
 
 }

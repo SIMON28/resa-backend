@@ -1,5 +1,8 @@
 package com.asptt.resabackend.util;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public interface CatalogueMessages {
 
     /**

@@ -6,6 +6,7 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import com.asptt.resa.commons.dao.Dao;
 import com.asptt.resabackend.entity.Plongee;
+import com.asptt.resabackend.entity.TypeActionReturnPlongee;
 
 public interface PlongeeDao extends Dao<Plongee> {
 
@@ -13,6 +14,6 @@ public interface PlongeeDao extends Dao<Plongee> {
 
 	List<Plongee> findPlongeeForEncadrant(String nbJourReserv, String nbHourApres);
 
-	List<Plongee> findPlongeeForAdherent();
+	List<Plongee> findPlongeeForAdherent(TypeActionReturnPlongee action);
 
 }

@@ -37,7 +37,11 @@ public enum BadUsage {
 	/**
 	 *
 	 */
-	FORMAT(new ErrorBean(7, "Wrong format"));
+	FORMAT(new ErrorBean(7, "Wrong format")),
+	/**
+	 *
+	 */
+	MISSING_QUERY(new ErrorBean(8, "Missing query parameter"));
 
 	private final ErrorBean value;
 

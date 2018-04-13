@@ -19,8 +19,6 @@ public interface Resource<R> {
 
 	public Response get(UriInfo uriInfo, String id);
 
-	// public T get(UriInfo uriInfo, String id) ;
-
 	public Response get(UriInfo uriInfo, String id,
 			JsonRepresentation jsonRepresentation);
 

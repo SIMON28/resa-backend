@@ -29,6 +29,7 @@ import com.asptt.resa.commons.json.JsonRepresentation;
 import com.asptt.resa.commons.resource.Query;
 import com.asptt.resa.commons.resource.ResourceBase;
 import com.asptt.resa.commons.utils.URIParserUtils;
+import com.asptt.resabackend.business.ResaBusiness;
 //import com.asptt.resabackend.commons.resource.ResourceBaseResa;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.ContactUrgent;
@@ -47,6 +48,14 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	@Override
 	protected AdherentService getService() {
 		return this.service;
+	}
+
+	@Autowired
+	private ResaBusiness resaBusiness;
+
+	@Override
+	public ResaBusiness getResaBusiness() {
+		return this.resaBusiness;
 	}
 
 	@POST
@@ -70,10 +79,6 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
 	public Response find(final @Context UriInfo uriInfo) {
-		// return super.find(uriInfo, AdherentSpecification.getAdherentLightView());
-//		return super.find(uriInfo, AdherentSpecification.getAdherentFullView());
-		
-		
 		Query query = new Query(uriInfo);
 		Integer count = getService().findCount(query.getQueryParameters());
 		Response response = super.find(uriInfo, AdherentSpecification.getAdherentFullView());
@@ -81,7 +86,6 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 		response.getHeaders().add("X-TOTAL-COUNT", count);
 		response.getHeaders().add("X-RESULT-COUNT", result.size());
 		return response;
-		// return super.find(uriInfo);
 	}
 
 	/* update full */
@@ -96,7 +100,6 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 		
 		final Object entity = getEntity(adh, AdherentSpecification.getAdherentFullView());
 		return Response.ok(entity).build();
-		// return super.update(uriInfo, id, resource);
 	}
 
 	/* update, merge */
@@ -146,7 +149,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
 	public Response findPlongees(final @Context UriInfo uriInfo, final @PathParam("adherentId") String adherentId) {
-
+		
 		List<Plongee> plongees = this.getService().findPlongees(uriInfo, adherentId);
 
 		final Object entities = constructPlongeeEntities(convPlongeeList(plongees),

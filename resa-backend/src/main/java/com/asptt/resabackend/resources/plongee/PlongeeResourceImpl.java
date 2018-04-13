@@ -13,6 +13,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.core.UriInfo;
 
 import org.slf4j.LoggerFactory;
@@ -23,13 +24,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.asptt.resa.commons.annotation.PATCH;
 import com.asptt.resa.commons.resource.Query;
 import com.asptt.resa.commons.resource.ResourceBase;
+import com.asptt.resabackend.business.OrderForDive;
+import com.asptt.resabackend.business.ResaBusiness;
 //import com.asptt.resabackend.commons.resource.ResourceBaseResa;
 import com.asptt.resabackend.entity.Plongee;
 import com.fasterxml.jackson.databind.JsonNode;
 
 @Path("plongee")
 @Controller("plongeeResource")
-public class PlongeeResourceImpl extends ResourceBase<Plongee> {
+public class PlongeeResourceImpl extends ResourceBase<Plongee> implements PlongeeResource{
 
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(PlongeeResourceImpl.class);
 
@@ -39,6 +42,14 @@ public class PlongeeResourceImpl extends ResourceBase<Plongee> {
 	@Override
 	protected PlongeeServiceImpl getService() {
 		return this.service;
+	}
+
+	@Autowired
+	private ResaBusiness resaBusiness;
+
+	@Override
+	public ResaBusiness getResaBusiness() {
+		return this.resaBusiness;
 	}
 
 	@POST
@@ -122,6 +133,23 @@ public class PlongeeResourceImpl extends ResourceBase<Plongee> {
 	public Response patch(final @Context UriInfo uriInfo, final @PathParam("id") String id,
 			final @RequestBody JsonNode jsonPatch) {
 		return super.patch(uriInfo, id, jsonPatch, PlongeeSpecification.getPlongeeFullView());
+	}
+
+	@POST
+	@Path("{id}/adherent")
+	@Consumes({ MediaType.APPLICATION_JSON })
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Override
+	public Response registerForDive(final @Context UriInfo uriInfo, 
+			final @PathParam("id") Integer plongeeId,
+			final @RequestBody OrderForDive order) {
+
+		this.getResaBusiness().checkOrderForDive(uriInfo, plongeeId, order);
+
+//		final Object entities = constructContactUrgentEntities(convContactUrgentList(contactUrgents),
+//				ContactSpecification.getContactUrgentFullView());
+
+		return Response.status(Status.CREATED).build();
 	}
 
 }

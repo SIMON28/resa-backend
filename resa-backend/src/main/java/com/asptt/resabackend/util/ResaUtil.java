@@ -22,7 +22,7 @@ import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resabackend.mapper.SqlSearchCriteria;
 import com.asptt.resabackend.resources.NomResources;
 
-@Component("resaUtil")
+@Component()
 public class ResaUtil {
 
 	static final long ONE_DAY_IN_MILLIS = 86400000;

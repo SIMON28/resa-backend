@@ -18,11 +18,10 @@ public interface AdherentService extends Service<Adherent> {
 
 	// service pour gerer les plongées de l'adherent
 	List<Plongee> findPlongees(UriInfo uriInfo, String adherentId);
-
+	
 	// service pour gerer les contacts de l'adherent
 	List<ContactUrgent> findContacts(String adherentId);
 	List<ContactUrgent> createContacts(String adherentId, List<ContactUrgent> resources);
 	void deleteContacts(String adherentId);
-
 
 }

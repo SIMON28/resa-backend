@@ -120,22 +120,4 @@ public class ContactResourceImpl extends ResourceBase<ContactUrgent> {
 				ContactSpecification.getContactUrgentFullView());
 	}
 
-//	@GET
-//	@Path("{adherentId}/contact")
-//	@Produces({ MediaType.APPLICATION_JSON })
-//	public Response findWithAdherent(final @Context UriInfo uriInfo,
-//			final @PathParam("adherentId") String adherentId) {
-//		return findWithAdherent(adherentId,ContactSpecification.getContactUrgentFullView());
-//	}
-
-//	@POST
-//	@Path("{adherentId}/contact")
-//	@Consumes({ MediaType.APPLICATION_JSON })
-//	@Produces({ MediaType.APPLICATION_JSON })
-//	@Override
-//	public Response createContactUrgent(final @Context UriInfo uriInfo,
-//			final @RequestBody List<contactUrgent> resources) {
-//		return super.createSousResource(uriInfo, resources);
-//	}
-
 }

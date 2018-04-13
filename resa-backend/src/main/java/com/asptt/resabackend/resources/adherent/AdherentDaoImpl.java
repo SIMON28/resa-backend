@@ -2,6 +2,7 @@ package com.asptt.resabackend.resources.adherent;
 
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -28,6 +29,7 @@ import com.asptt.resabackend.entity.Adherent.Roles;
 import com.asptt.resabackend.mapper.AdherentRowMapper;
 import com.asptt.resabackend.mapper.SqlSearchCriteria;
 import com.asptt.resabackend.resources.NomResources;
+import com.asptt.resabackend.util.ResaBackendMessage;
 import com.asptt.resabackend.util.ResaUtil;
 import com.mysql.jdbc.Statement;
 
@@ -129,7 +131,7 @@ public class AdherentDaoImpl implements AdherentDao {
 			adh.setContacts(getContacts(license));
 			return adh;
 		} catch (DataAccessException e) {
-			throw new NotFoundException(NotFound.GENERIC, "Aucun Adherent avec la license [" + license + "]");
+			throw new NotFoundException(NotFound.GENERIC, MessageFormat.format(ResaBackendMessage.ADHERENT_NOT_FOUND,license));
 		}
 	}
 
@@ -354,7 +356,7 @@ public class AdherentDaoImpl implements AdherentDao {
 		try {
 			KeyHolder keyHolder = new GeneratedKeyHolder();
 			StringBuffer sql3 = new StringBuffer();
-			sql3.append("DEL FROM REL_ADHERENT_CONTACT WHERE ADHERENT_LICENSE = ? and CONTACT_URGENT_IDCONTACT =  ?");
+			sql3.append("DELETE FROM REL_ADHERENT_CONTACT WHERE ADHERENT_LICENSE = ? and CONTACT_URGENT_IDCONTACT =  ?");
 			jdbcTemplate.update(connection -> {
 				PreparedStatement ps = connection.prepareStatement(sql3.toString(), Statement.RETURN_GENERATED_KEYS);
 				ps.setString(1, numeroDeLicense);

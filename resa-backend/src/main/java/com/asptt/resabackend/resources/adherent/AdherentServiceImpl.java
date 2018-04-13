@@ -1,5 +1,6 @@
 package com.asptt.resabackend.resources.adherent;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,17 +13,23 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.asptt.resa.commons.exception.BadUsage;
+import com.asptt.resa.commons.exception.BadUsageException;
 import com.asptt.resa.commons.exception.Functional;
 import com.asptt.resa.commons.exception.FunctionalException;
 import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resa.commons.service.ServiceBase;
+import com.asptt.resa.commons.utils.URIParserUtils;
 import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.Adherent.Roles;
 import com.asptt.resabackend.entity.ContactUrgent;
 import com.asptt.resabackend.entity.Plongee;
+import com.asptt.resabackend.entity.TypeActionReturnPlongee;
 import com.asptt.resabackend.resources.contacturgent.ContactService;
 import com.asptt.resabackend.resources.plongee.PlongeeService;
+import com.asptt.resabackend.util.ResaUtil;
+
 
 @Service("adherentService")
 public class AdherentServiceImpl extends ServiceBase<Adherent> implements AdherentService {
@@ -70,28 +77,28 @@ public class AdherentServiceImpl extends ServiceBase<Adherent> implements Adhere
 	}
 
 	@Override
+	@Transactional(rollbackFor = { TechnicalException.class })
 	public Adherent create(Adherent resource) {
 		try {
 			this.get(resource.getNumeroLicense());
 		} catch (NotFoundException e) {
 			return super.create(resource);
 		}
-		throw new FunctionalException(Functional.REGISTRATION,
-				"Creation Impossible, l'adherent avec le numero de license [" + resource.getNumeroLicense()
-						+ "] existe déjà");
+		throw new FunctionalException(Functional.REGISTRATION,MessageFormat.format(
+				"Creation Impossible, l''adherent avec le numero de license [{0}] existe déjà",resource.getNumeroLicense()));
 	}
 
-	
 	@Override
 	public Integer findCount(MultivaluedMap<String, String> criteria) {
 		return getDao().findCount(criteria);
 	}
-	
+
 	@Override
 	public List<Adherent> find(MultivaluedMap<String, String> criteria) {
-//		for (Map.Entry<String, List<String>> entry : criteria.entrySet()) {
-//			LOGGER.info("clé=[" + entry.getKey() + "] valeur=[" + entry.getValue().get(0) + "]");
-//		}
+		// for (Map.Entry<String, List<String>> entry : criteria.entrySet()) {
+		// LOGGER.info("clé=[" + entry.getKey() + "] valeur=[" + entry.getValue().get(0)
+		// + "]");
+		// }
 
 		return super.find(criteria);
 	}
@@ -145,34 +152,87 @@ public class AdherentServiceImpl extends ServiceBase<Adherent> implements Adhere
 	}
 
 	@Override
+	@Transactional
 	public List<ContactUrgent> createContacts(String adherentId, List<ContactUrgent> resources) {
+		// verifie si cet adherent existe bien.
 		Adherent adh = this.get(adherentId);
 		return contactService.createContactsForAdherent(resources, adherentId);
 	}
 
 	@Override
+	@Transactional
 	public void deleteContacts(String adherentId) {
-
 		contactService.deleteContactsForAdherent(adherentId);
 	}
 
 	@Override
 	public List<Plongee> findPlongees(UriInfo uriInfo, String adherentId) {
-		Adherent adh = get(adherentId);
-		List<Plongee> plongees = new ArrayList<>();
-		if (adh.isVesteRouge()) {
-			return plongees = plongeeService.findPlongeeForEncadrant(env.getProperty("reservation.max"),
-					env.getProperty("visible.apres.encadrant"));
-		} else {
-			plongees = plongeeService.findPlongeeForAdherent();
-			List<Plongee> plongeesOuvertes = new ArrayList<>();
-			for (Plongee plongee : plongees) {
-				if (plongee.isExistDP() && plongee.isExistPilote()) {
-					plongeesOuvertes.add(plongee);
+		List<Plongee> result = new ArrayList<>();
+		MultivaluedMap<String, String> criterias = URIParserUtils.extractCriteria(uriInfo.getQueryParameters());
+		if (criterias.containsKey("action")) {
+			String actionValue = criterias.getFirst("action");
+			TypeActionReturnPlongee value = TypeActionReturnPlongee.fromString(actionValue);
+			if (null != value) {
+				Adherent adherent = get(adherentId);
+				switch (value) {
+				case CONSULTER:
+					if (adherent.isVesteRouge()) {
+						result = plongeeService.findPlongeeForEncadrant(env.getProperty("reservation.max"),
+								env.getProperty("visible.apres.encadrant"));
+					} else {
+						List<Plongee> plongees = plongeeService.findPlongeeForAdherent(TypeActionReturnPlongee.CONSULTER);
+						// recherche les plongées ouvertes càd ayant un DP et un Pilote
+						for (Plongee plongee : plongees) {
+							if (plongee.isExistDP() && plongee.isExistPilote()) {
+								result.add(plongee);
+							}
+						}
+					}
+					break;
+				case RESERVER:
+					List<Plongee> plongees = new ArrayList<>();
+					if (adherent.isVesteRouge()) {
+						plongees = plongeeService.findPlongeeForEncadrant(env.getProperty("reservation.max"),
+								env.getProperty("visible.apres.encadrant"));
+					} else {
+						plongees = plongeeService.findPlongeeForAdherent(TypeActionReturnPlongee.RESERVER);
+						// recherche les plongées ouvertes càd ayant un DP et un Pilote
+					}
+					for (Plongee plongee : plongees) {
+			            boolean isNotInscrit = true;
+			            for (String pId : plongee.getParticipants()) {
+			                if (pId.equalsIgnoreCase(adherent.getNumeroLicense())) {
+			                    isNotInscrit = false;
+			                    break;
+			                }
+			            }
+			            for (String paId : plongee.getParticipantsEnAttente()) {
+			                if (paId.equalsIgnoreCase(adherent.getNumeroLicense())) {
+			                    isNotInscrit = false;
+			                    break;
+			                }
+			            }
+			            if (isNotInscrit) {
+			                long nbJours = ResaUtil.checkDateCM(adherent.getDateCM(), plongee.getDatePlongee());
+			                if (nbJours >= 0) {
+			                    result.add(plongee);
+			                }
+			            }
+			        }
+					break;
+				case DESINSCRIRE:
+					// TODO findDesincription
+					break;
 				}
+			} else {
+				throw new BadUsageException(BadUsage.UNKNOWN_VALUE,
+						"Parameter 'action' must be 'consulter, 'reserver' or 'desinscrire'");
 			}
-			return plongeesOuvertes;
+
+		} else {
+			throw new BadUsageException(BadUsage.MISSING_QUERY, "Query parameter 'action' is mandatory");
 		}
+		return result;
 	}
 
 }

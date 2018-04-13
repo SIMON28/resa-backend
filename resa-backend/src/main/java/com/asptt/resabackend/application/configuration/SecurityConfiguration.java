@@ -23,11 +23,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
 	@Override
 	protected void configure(HttpSecurity http) throws Exception, UnauthorizedException {
-		// http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.NEVER);
-
-		// http.antMatcher("/api/**").authorizeRequests().anyRequest().authenticated().and().httpBasic();
-		// http.csrf().disable();
-
 		http.csrf().disable();
 
 		// All requests send to the Web Server request must be authenticated
@@ -36,21 +31,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 		// Use AuthenticationEntryPoint to authenticate user/password
 		http.httpBasic().authenticationEntryPoint(securityEntryPoint);
 
-		// http.authorizeRequests()
-		// .antMatchers("api/**").hasRole("USER").and().httpBasic();
-
-		// http.authorizeRequests().anyRequest().fullyAuthenticated();
-		// http.httpBasic().authenticationEntryPoint(authEntryPoint);
-
-		// http.csrf().disable().authorizeRequests() .anyRequest().authenticated()
-		// .and().httpBasic() .authenticationEntryPoint(authEntryPoint);
 	}
 
-	 @Bean
-	 public BCryptPasswordEncoder passwordEncoder() {
-	 BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-	 return bCryptPasswordEncoder;
-	 }
+	@Bean
+	public BCryptPasswordEncoder passwordEncoder() {
+		BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
+		return bCryptPasswordEncoder;
+	}
 
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
@@ -60,7 +47,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
 		String encrytedPassword = this.passwordEncoder().encode(password);
 		System.out.println("Encoded password of password=" + encrytedPassword);
-		
+
 		InMemoryUserDetailsManagerConfigurer<AuthenticationManagerBuilder> //
 		mngConfig = auth.inMemoryAuthentication();
 

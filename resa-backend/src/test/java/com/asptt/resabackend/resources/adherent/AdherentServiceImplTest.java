@@ -1,12 +1,20 @@
 package com.asptt.resabackend.resources.adherent;
 
+import static org.mockito.Mockito.when;
+
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
+
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ActiveProfiles;
@@ -21,6 +29,8 @@ import com.asptt.resabackend.entity.Adherent;
 import com.asptt.resabackend.entity.Adherent.Roles;
 import com.asptt.resabackend.entity.ContactUrgent;
 import com.asptt.resabackend.entity.NiveauAutonomie;
+import com.asptt.resabackend.entity.Plongee;
+import com.asptt.resabackend.util.ResaBackendMessage;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration (classes=ApplicationTest.class)
@@ -48,6 +58,7 @@ public class AdherentServiceImplTest {
 		} catch(NotFoundException e) {
 			LOGGER.info("Adherent non trouve");
 			Assert.assertEquals("404-0", e.getCategory()+"-"+e.getCode().getCode());
+			Assert.assertEquals(MessageFormat.format(ResaBackendMessage.ADHERENT_NOT_FOUND,"9lpm25"), e.getMessage());
 		}
 	}
 
@@ -92,7 +103,7 @@ public class AdherentServiceImplTest {
 		Adherent adh = new Adherent();
 //		adh.setNumeroLicense("");
 		adh.setNiveau(NiveauAutonomie.BATM.name());
-		adh.setNom("ACCUEIL");
+		adh.setNom("TESTCREATE");
 		adh.setPrenom("toto");
 		adh.setEnumNiveau(NiveauAutonomie.P0);
 		adh.setTelephone("0123456789");
@@ -114,13 +125,26 @@ public class AdherentServiceImplTest {
 		adh.setContacts(contacts);
 		
 		try {
-			Adherent adhUpdated = adherentService.update("999998",adh);
-			Assert.assertEquals("toto", adhUpdated.getPrenom());
+			Adherent adhUpdated = adherentService.update("unnumero",adh);
+			Assert.assertEquals("0123456789", adhUpdated.getTelephone());
 			Assert.assertEquals(adh, adhUpdated);
 			LOGGER.info("On a bien une mise à jour");
 		} catch (TechnicalException e) {
 			LOGGER.debug("mise à jour d'un adherent plantée"+e.getMessage());
 		}
+	}
+	
+//	@Test
+	public void findPlongees() {
+		UriInfo uriInfo = Mockito.mock(UriInfo.class);
+		MultivaluedMap<String, String> queryParameters = new MultivaluedHashMap<>();
+		queryParameters.add("action", "consulter");
+		queryParameters.add("param2", "value2");
+		queryParameters.add("fields", "toto,titi,tata");
+		
+		when(uriInfo.getQueryParameters()).thenReturn(queryParameters);
+		List<Plongee> plongees = adherentService.findPlongees(uriInfo, "096042");
+		Assert.assertEquals(4,plongees.size());
 	}
 	
 	@Test
@@ -129,7 +153,7 @@ public class AdherentServiceImplTest {
 		Assert.assertEquals("DEFURNE", contact.get(0).getNom());
 	}
 
-//	@Test
+	@Test
 	public void createContactUrgent() {
 		List<ContactUrgent> contacts = adherentService.findContacts("096042");
 		List<ContactUrgent> contactCreated = adherentService.createContacts("unnumero", contacts);

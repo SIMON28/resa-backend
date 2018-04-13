@@ -6,11 +6,12 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Component;
 
 import com.asptt.resabackend.entity.NiveauAutonomie;
 import com.asptt.resabackend.entity.Plongee;
 import com.asptt.resabackend.entity.TypePlongee;
-
+@Component
 public class PlongeeRowMapper implements RowMapper<Plongee> {
 
 	@Override

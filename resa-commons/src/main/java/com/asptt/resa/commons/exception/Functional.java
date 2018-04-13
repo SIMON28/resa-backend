@@ -10,7 +10,15 @@ public enum Functional {
 
 	REGISTRATION(new ErrorBean(1, "Registration error")),
 
-	AUTHENTICATION(new ErrorBean(2, "Authentication error"));
+	AUTHENTICATION(new ErrorBean(2, "Authentication error")),
+
+	REGISTRATION_HEURE_OUVERTURE(new ErrorBean(3, "Registration error. Waiting days and opening hour")),
+
+	REGISTRATION_JOUR_HO(new ErrorBean(4, "Registration error. Waiting opening hour")),
+	
+	REGISTRATION_NB_MINI_PLONGEUR(new ErrorBean(5, "Registration error. Not enough divers ")),
+
+	REGISTRATION_PLONGEE_FERMEE(new ErrorBean(6, "Registration error. closed dive "));
 
 	private final ErrorBean value;
 
