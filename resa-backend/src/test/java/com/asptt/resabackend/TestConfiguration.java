@@ -2,10 +2,11 @@ package com.asptt.resabackend;
 
 import javax.sql.DataSource;
 
+import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 
@@ -17,12 +18,12 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
  *
  */
 @Configuration
+@Profile(value = "test")
 @PropertySource({"classpath:application-test.properties","classpath:properties/ResaPlongee.properties","classpath:properties/InscriptionPlongeePage.properties"})
-@ConfigurationProperties(prefix = "spring.datasource")
 public class TestConfiguration {
 
 	@Bean
-	@ConfigurationProperties(prefix="spring.datasource")
+	@ConfigurationProperties(prefix="test.datasource")
 	public DataSource dataSource() {
 	    return DataSourceBuilder.create().build();
 	}

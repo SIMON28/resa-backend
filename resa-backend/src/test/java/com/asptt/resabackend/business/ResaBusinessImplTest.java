@@ -111,7 +111,7 @@ public class ResaBusinessImplTest {
 		}
 		catch (NotFoundException e) {
 			LOGGER.info(e.toString()+"   code=["+e.getCode().getCode()+"]  category=["+e.getCategory()+"]  message=["+e.getMessage()+"]");
-			Assert.assertEquals(MessageFormat.format(ResaBackendMessage.PLONGEE_NOT_FOUND, plongeeId), e.getMessage()); 
+			Assert.assertEquals(MessageFormat.format(ResaBackendMessage.PLONGEE_NOT_FOUND, plongeeId.toString()), e.getMessage()); 
 			Assert.assertEquals(0, e.getCode().getCode());
 			Assert.assertEquals(404, e.getCategory());
 		}

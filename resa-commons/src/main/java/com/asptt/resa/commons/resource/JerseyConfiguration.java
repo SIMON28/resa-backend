@@ -1,5 +1,7 @@
 package com.asptt.resa.commons.resource;
 
+import javax.ws.rs.ApplicationPath;
+
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +15,7 @@ import com.asptt.resa.commons.resource.mapper.UnauthorizedMapper;
 import com.asptt.resa.commons.resource.mapper.UnhandledMapper;
 
 @Configuration
-//@ApplicationPath("/api/0.4.1")
+@ApplicationPath("/api/v1")
 //public class JerseyConfiguration extends JerseyJaxbConfiguration  {
 public class JerseyConfiguration extends ResourceConfig  {
 

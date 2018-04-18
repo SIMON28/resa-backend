@@ -5,6 +5,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.security.RolesAllowed;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -62,6 +63,7 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 	@Consumes({ MediaType.APPLICATION_JSON })
 	@Produces({ MediaType.APPLICATION_JSON })
 	@Override
+	@RolesAllowed("ADMIN")
 	public Response create(final @Context UriInfo uriInfo, final @RequestBody Adherent resource) {
 		return super.create(uriInfo, resource);
 	}

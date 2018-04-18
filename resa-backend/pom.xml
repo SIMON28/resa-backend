@@ -13,16 +13,14 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<!-- version>1.5.10.RELEASE</version> -->
-		<version>2.0.0.RELEASE</version>
-		<relativePath /> <!-- lookup parent from repository -->
+		<version>1.5.10.RELEASE</version>
+		<!-- <relativePath /> lookup parent from repository -->
 	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<start-class>com.asptt.resabackend.Application</start-class>
 		<java.version>1.8</java.version>
-		<spring.boot.version>1.2.6.RELEASE</spring.boot.version>
 	</properties>
 
 	<repositories>
@@ -42,16 +40,6 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>org.springframework.boot</groupId>
-					<artifactId>spring-boot-starter-logging</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-properties-migrator</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -69,15 +57,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-jdbc</artifactId>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.tomcat</groupId>
-					<artifactId>tomcat-jdbc</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
-		<!-- <dependency> <groupId>org.springframework.boot</groupId> <artifactId>spring-boot-starter-tomcat</artifactId> 
-			</dependency> -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
@@ -114,10 +94,6 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<!-- <dependencies> <dependency> <groupId>org.springframework</groupId> 
-					<artifactId>springloaded</artifactId> <version>1.2.4.RELEASE</version> </dependency> 
-					</dependencies> <executions> <execution> <goals> <goal>repackage</goal> </goals> 
-					</execution> </executions> -->
 			</plugin>
 		</plugins>
 	</build>

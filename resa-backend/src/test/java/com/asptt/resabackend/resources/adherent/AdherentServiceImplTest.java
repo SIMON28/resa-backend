@@ -121,7 +121,7 @@ public class AdherentServiceImplTest {
 		l_roles.add(Roles.SECRETARIAT.name());
 		adh.setRoles(l_roles);
 		List<String> contacts = new ArrayList<>();
-		contacts.add("113");
+//		contacts.add("113");
 		adh.setContacts(contacts);
 		
 		try {
