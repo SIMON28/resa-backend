@@ -6,6 +6,7 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.springframework.context.annotation.Configuration;
 
+import com.asptt.resa.commons.resource.mapper.AccessDeniedMapper;
 import com.asptt.resa.commons.resource.mapper.BadUsageMapper;
 import com.asptt.resa.commons.resource.mapper.FunctionalMapper;
 import com.asptt.resa.commons.resource.mapper.JsonMappingMapper;
@@ -33,6 +34,6 @@ public class JerseyConfiguration extends ResourceConfig  {
                 this.register(TechnicalMapper.class);
                 this.register(UnauthorizedMapper.class);
                 this.register(UnhandledMapper.class);
-
+                this.register(AccessDeniedMapper.class);
 	}
 }
