@@ -1,13 +1,15 @@
-package com.asptt.resabackend.business;
+package com.asptt.resabackend.entity;
 
-public enum TypeOrderForDive {
-    ADD("add"),
-    DELETE("delete"),
-    WAIT("wait");
+public enum TypeRoles {
+	ADMIN("ADMIN"),
+	USER("USER"),
+	SECRETARIAT("SECRETARIAT"),
+	DP("DP"),
+	ENCADRANT("ENCADRANT");
 
     private final String text;
 
-    TypeOrderForDive(String text) {
+    TypeRoles(String text) {
         this.text = text;
     }
 
@@ -24,9 +26,9 @@ public enum TypeOrderForDive {
      * @param text
      * @return
      */
-    public static TypeOrderForDive fromString(String text) {
+    public static TypeRoles fromString(String text) {
         if (text != null) {
-            for (TypeOrderForDive b : TypeOrderForDive.values()) {
+            for (TypeRoles b : TypeRoles.values()) {
                 if (text.equalsIgnoreCase(b.text)) {
                     return b;
                 }
@@ -34,6 +36,4 @@ public enum TypeOrderForDive {
         }
         return null;
     }
-
-
 }

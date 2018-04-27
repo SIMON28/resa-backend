@@ -59,8 +59,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 		http.antMatcher("/api/**").authorizeRequests().anyRequest().authenticated().and().httpBasic();
-		http.exceptionHandling().authenticationEntryPoint(unauthorizedEntryPoint());
-		// http.anonymous().disable().exceptionHandling().authenticationEntryPoint(securityEntryPoint);
+//		http.exceptionHandling().authenticationEntryPoint(unauthorizedEntryPoint());
+//		http.anonymous().disable().exceptionHandling().authenticationEntryPoint(securityEntryPoint);
 		http.csrf().disable();
 	}
 

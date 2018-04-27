@@ -5,17 +5,16 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.asptt.resa.commons.exception.NotFoundException;
-import com.asptt.resabackend.ApplicationTest;
+import com.asptt.resabackend.Application;
 import com.asptt.resabackend.entity.Plongee;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration (classes=ApplicationTest.class)
-@ActiveProfiles(profiles = "test")
+@ContextConfiguration (classes=Application.class)
+//@ActiveProfiles(profiles = "test")
 public class PlongeeDaoImplTest {
 	
 	private static final org.slf4j.Logger LOGGER = LoggerFactory

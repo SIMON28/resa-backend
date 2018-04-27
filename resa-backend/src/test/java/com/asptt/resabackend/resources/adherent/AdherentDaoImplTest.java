@@ -9,20 +9,19 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.TechnicalException;
-import com.asptt.resabackend.ApplicationTest;
+import com.asptt.resabackend.Application;
 import com.asptt.resabackend.entity.Adherent;
-import com.asptt.resabackend.entity.Adherent.Roles;
 import com.asptt.resabackend.entity.NiveauAutonomie;
+import com.asptt.resabackend.entity.TypeRoles;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration (classes=ApplicationTest.class)
-@ActiveProfiles(profiles = "test")
+@ContextConfiguration (classes=Application.class)
+//@ActiveProfiles(profiles = "test")
 public class AdherentDaoImplTest {
 	
 	private static final org.slf4j.Logger LOGGER = LoggerFactory
@@ -54,23 +53,23 @@ public class AdherentDaoImplTest {
 	public void testCreate() {
 		Adherent adh = new Adherent();
 		adh.setNumeroLicense("unnumero");
-		adh.setNiveau(NiveauAutonomie.BATM.name());
+		adh.setNiveau(NiveauAutonomie.BATM);
 		adh.setNom("TESTCREATE");
 		adh.setPrenom("toto");
-		adh.setEnumNiveau(NiveauAutonomie.P0);
+		adh.setNiveau(NiveauAutonomie.P0);
 		adh.setTelephone("0499999999");
 		adh.setMail("test.test@orange.fr");
 		adh.setEncadrement(null);
 		adh.setPilote(false);
-		adh.setActif(false);
+		adh.setActif(0);
 		adh.setTiv(false);
 		adh.setDateCM(new Date());
 		adh.setAnneeCotisation(2000);
 		adh.setCommentaire("");
 		List<String> l_roles = new ArrayList<>();
-		l_roles.add(Roles.ADMIN.name());
-		l_roles.add(Roles.USER.name());
-		l_roles.add(Roles.SECRETARIAT.name());
+		l_roles.add(TypeRoles.ADMIN.name());
+		l_roles.add(TypeRoles.USER.name());
+		l_roles.add(TypeRoles.SECRETARIAT.name());
 		adh.setRoles(l_roles);
 		
 		try {
@@ -87,23 +86,23 @@ public class AdherentDaoImplTest {
 	public void testUpdate() {
 		Adherent adh = new Adherent();
 		adh.setNumeroLicense("999998");
-		adh.setNiveau(NiveauAutonomie.BATM.name());
+		adh.setNiveau(NiveauAutonomie.BATM);
 		adh.setNom("ACCUEIL");
 		adh.setPrenom("toto");
-		adh.setEnumNiveau(NiveauAutonomie.P0);
+		adh.setNiveau(NiveauAutonomie.P0);
 		adh.setTelephone("0491163590");
 		adh.setMail("titi.toto@orange.fr");
 		adh.setEncadrement(null);
 		adh.setPilote(false);
-		adh.setActif(false);
+		adh.setActif(0);
 		adh.setTiv(false);
 		adh.setDateCM(new Date());
 		adh.setAnneeCotisation(2000);
 		adh.setCommentaire("");
 		List<String> l_roles = new ArrayList<>();
-		l_roles.add(Roles.ADMIN.name());
-		l_roles.add(Roles.USER.name());
-		l_roles.add(Roles.SECRETARIAT.name());
+		l_roles.add(TypeRoles.ADMIN.name());
+		l_roles.add(TypeRoles.USER.name());
+		l_roles.add(TypeRoles.SECRETARIAT.name());
 		adh.setRoles(l_roles);
 		List<String> contacts = new ArrayList<>();
 		contacts.add("113");

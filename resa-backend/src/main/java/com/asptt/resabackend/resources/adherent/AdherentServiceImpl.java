@@ -21,11 +21,12 @@ import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.TechnicalException;
 import com.asptt.resa.commons.service.ServiceBase;
 import com.asptt.resa.commons.utils.URIParserUtils;
+import com.asptt.resabackend.business.ResaBusinessRGUtil;
 import com.asptt.resabackend.entity.Adherent;
-import com.asptt.resabackend.entity.Adherent.Roles;
 import com.asptt.resabackend.entity.ContactUrgent;
 import com.asptt.resabackend.entity.Plongee;
 import com.asptt.resabackend.entity.TypeActionReturnPlongee;
+import com.asptt.resabackend.entity.TypeRoles;
 import com.asptt.resabackend.resources.contacturgent.ContactService;
 import com.asptt.resabackend.resources.plongee.PlongeeService;
 import com.asptt.resabackend.util.ResaUtil;
@@ -115,12 +116,12 @@ public class AdherentServiceImpl extends ServiceBase<Adherent> implements Adhere
 			}
 		} else {
 			// Gestion des roles
-			for (Roles role : resource.getRoles()) {
+			for (TypeRoles role : resource.getRoles()) {
 				if (!adhRollBack.getRoles().contains(role)) {
 					getDao().createRoleForAdherent(id, role);
 				}
 			}
-			for (Roles role : adhRollBack.getRoles()) {
+			for (TypeRoles role : adhRollBack.getRoles()) {
 				if (!resource.getRoles().contains(role)) {
 					getDao().deleteRoleForAdherent(id, role);
 				}
@@ -176,7 +177,7 @@ public class AdherentServiceImpl extends ServiceBase<Adherent> implements Adhere
 				Adherent adherent = get(adherentId);
 				switch (value) {
 				case CONSULTER:
-					if (adherent.isVesteRouge()) {
+					if (ResaBusinessRGUtil.isVesteRouge(adherent)) {
 						result = plongeeService.findPlongeeForEncadrant(env.getProperty("reservation.max"),
 								env.getProperty("visible.apres.encadrant"));
 					} else {
@@ -191,7 +192,7 @@ public class AdherentServiceImpl extends ServiceBase<Adherent> implements Adhere
 					break;
 				case RESERVER:
 					List<Plongee> plongees = new ArrayList<>();
-					if (adherent.isVesteRouge()) {
+					if (ResaBusinessRGUtil.isVesteRouge(adherent)) {
 						plongees = plongeeService.findPlongeeForEncadrant(env.getProperty("reservation.max"),
 								env.getProperty("visible.apres.encadrant"));
 					} else {

@@ -4,13 +4,13 @@ import javax.ws.rs.core.MultivaluedMap;
 
 import com.asptt.resa.commons.dao.Dao;
 import com.asptt.resabackend.entity.Adherent;
-import com.asptt.resabackend.entity.Adherent.Roles;
+import com.asptt.resabackend.entity.TypeRoles;
 
 public interface AdherentDao extends Dao<Adherent> {
 
-	void createRoleForAdherent(String id, Roles role);
+	void createRoleForAdherent(String id, TypeRoles role);
 
-	void deleteRoleForAdherent(String id, Roles role);
+	void deleteRoleForAdherent(String id, TypeRoles role);
 
 	void createContactForAdherent(String id, String contactId);
 

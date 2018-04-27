@@ -148,7 +148,7 @@ public class ResaUtil {
 	}
 
 	/**
-	 * Construit le moceaux de la requete SQL avec les criteres de recherche
+	 * Construit le morceaux de la requete SQL avec les criteres de recherche
 	 * 
 	 * @param criteria
 	 *            MultivaluedMap<String, String> criteria dont on extrait les

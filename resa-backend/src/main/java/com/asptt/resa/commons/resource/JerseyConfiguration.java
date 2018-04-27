@@ -11,9 +11,12 @@ import com.asptt.resa.commons.resource.mapper.BadUsageMapper;
 import com.asptt.resa.commons.resource.mapper.FunctionalMapper;
 import com.asptt.resa.commons.resource.mapper.JsonMappingMapper;
 import com.asptt.resa.commons.resource.mapper.NotFoundMapper;
+import com.asptt.resa.commons.resource.mapper.NotImplementedMapper;
 import com.asptt.resa.commons.resource.mapper.TechnicalMapper;
 import com.asptt.resa.commons.resource.mapper.UnauthorizedMapper;
 import com.asptt.resa.commons.resource.mapper.UnhandledMapper;
+import com.asptt.resabackend.resources.adherent.AdherentResourceImpl;
+import com.asptt.resabackend.resources.plongee.PlongeeResourceImpl;
 
 @Configuration
 @ApplicationPath("/api/v1")
@@ -35,5 +38,10 @@ public class JerseyConfiguration extends ResourceConfig  {
                 this.register(UnauthorizedMapper.class);
                 this.register(UnhandledMapper.class);
                 this.register(AccessDeniedMapper.class);
+                this.register(NotImplementedMapper.class);
+                //resources
+        		this.register(AdherentResourceImpl.class);
+        		this.register(PlongeeResourceImpl.class);
+                
 	}
 }

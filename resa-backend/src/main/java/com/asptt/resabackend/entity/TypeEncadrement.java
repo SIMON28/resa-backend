@@ -1,13 +1,13 @@
-package com.asptt.resabackend.business;
+package com.asptt.resabackend.entity;
 
-public enum TypeOrderForDive {
-    ADD("add"),
-    DELETE("delete"),
-    WAIT("wait");
+public enum TypeEncadrement {
+    E2("E2"),
+    E3("E3"),
+    E4("E4");
 
     private final String text;
 
-    TypeOrderForDive(String text) {
+    TypeEncadrement(String text) {
         this.text = text;
     }
 
@@ -24,9 +24,9 @@ public enum TypeOrderForDive {
      * @param text
      * @return
      */
-    public static TypeOrderForDive fromString(String text) {
+    public static TypeEncadrement fromString(String text) {
         if (text != null) {
-            for (TypeOrderForDive b : TypeOrderForDive.values()) {
+            for (TypeEncadrement b : TypeEncadrement.values()) {
                 if (text.equalsIgnoreCase(b.text)) {
                     return b;
                 }

@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.asptt.resa.commons.service.ServiceBase;
-import com.asptt.resabackend.entity.Adherent;
+import com.asptt.resabackend.business.ResaBusiness;
 //import com.asptt.resabackend.commons.service.ServiceBaseResa;
 import com.asptt.resabackend.entity.Plongee;
 import com.asptt.resabackend.entity.TypeActionReturnPlongee;
@@ -27,6 +27,9 @@ public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeS
 
 	@Autowired
 	AdherentService adherentService;
+
+	@Autowired
+	ResaBusiness resaBusiness;
 
 	@Override
 	protected PlongeeDao getDao() {
@@ -50,7 +53,8 @@ public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeS
 
 	@Override
 	public List<Plongee> find() {
-		return setDpPilote(super.find());
+//		return setDpPilote(super.find());
+		return super.find();
 	}
 
 	@Override
@@ -58,8 +62,8 @@ public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeS
 		for (Map.Entry<String, List<String>> entry : criteria.entrySet()) {
 			LOGGER.info("clé=[" + entry.getKey() + "] valeur=[" + entry.getValue().get(0) + "]");
 		}
-
-		return setDpPilote(super.find(criteria));
+//		return setDpPilote(super.find(criteria));
+		return super.find(criteria);
 	}
 
 	@Override
@@ -67,37 +71,39 @@ public class PlongeeServiceImpl extends ServiceBase<Plongee> implements PlongeeS
 		Plongee plongee = super.get(id);
 		List<Plongee> plongees = new ArrayList<>();
 		plongees.add(plongee);
-		setDpPilote(plongees);
+//		setDpPilote(plongees);
 		return plongees.get(0);
 	}
 
-	private List<Plongee> setDpPilote(List<Plongee> plongees) {
-		List<Plongee> updatedPlongees = new ArrayList<>();
-		for (Plongee plongee : plongees) {
-			for (String adhId : plongee.getParticipants()) {
-				Adherent adh = adherentService.get(adhId);
-				if (adh.isPilote()) {
-					plongee.setPilote(adhId);
-				}
-				if (adh.isDp()) {
-					plongee.setDp(adhId);
-				}
-			}
-			updatedPlongees.add(plongee);
-		}
-		return updatedPlongees;
-	}
+//	private List<Plongee> setDpPilote(List<Plongee> plongees) {
+//		List<Plongee> updatedPlongees = new ArrayList<>();
+//		for (Plongee plongee : plongees) {
+//			for (String adhId : plongee.getParticipants()) {
+//				Adherent adh = adherentService.get(adhId);
+//				if (adh.isPilote()) {
+//					plongee.setPilote(adhId);
+//				}
+//				if (resaBusiness.isDp(adh)) {
+//					plongee.setDp(adhId);
+//				}
+//			}
+//			updatedPlongees.add(plongee);
+//		}
+//		return updatedPlongees;
+//	}
 
 	@Override
 	public List<Plongee> findPlongeeForEncadrant(String nbJourReserv, String nbHourApres) {
-		List<Plongee> plongees = getDao().findPlongeeForEncadrant(nbJourReserv, nbHourApres);
-		return setDpPilote(plongees);
+//		List<Plongee> plongees = getDao().findPlongeeForEncadrant(nbJourReserv, nbHourApres);
+//		return setDpPilote(plongees);
+		return getDao().findPlongeeForEncadrant(nbJourReserv, nbHourApres);
 	}
 
 	@Override
 	public List<Plongee> findPlongeeForAdherent(TypeActionReturnPlongee action) {
-		List<Plongee> plongees = getDao().findPlongeeForAdherent(action);
-		return setDpPilote(plongees);
+//		List<Plongee> plongees = getDao().findPlongeeForAdherent(action);
+//		return setDpPilote(plongees);
+		return getDao().findPlongeeForAdherent(action);
 	}
 
 	@Override

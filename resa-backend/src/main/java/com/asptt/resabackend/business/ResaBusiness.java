@@ -16,6 +16,6 @@ public interface ResaBusiness {
 	 * @param order
 	 */
 	void checkOrderForDive(UriInfo uriInfo, Integer plongeeId, OrderForDive order);
-	
+
 }
 

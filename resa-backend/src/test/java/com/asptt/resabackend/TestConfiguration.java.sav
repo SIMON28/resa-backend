@@ -5,6 +5,7 @@ import javax.sql.DataSource;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.annotation.PropertySource;
@@ -19,6 +20,7 @@ import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
  */
 @Configuration
 @Profile(value = "test")
+@ComponentScan(basePackages= {"com.asptt.resabackend"})
 @PropertySource({"classpath:application-test.properties","classpath:properties/ResaPlongee.properties","classpath:properties/InscriptionPlongeePage.properties"})
 public class TestConfiguration {
 

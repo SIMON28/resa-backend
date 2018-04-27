@@ -17,17 +17,19 @@ import com.asptt.resa.commons.exception.BadUsage;
 import com.asptt.resa.commons.exception.BadUsageException;
 import com.asptt.resa.commons.exception.Functional;
 import com.asptt.resa.commons.exception.FunctionalException;
+import com.asptt.resa.commons.exception.NotImplemented;
+import com.asptt.resa.commons.exception.NotImplementedException;
 import com.asptt.resabackend.entity.Adherent;
-import com.asptt.resabackend.entity.Adherent.Encadrement;
 import com.asptt.resabackend.entity.NiveauAutonomie;
 import com.asptt.resabackend.entity.Plongee;
+import com.asptt.resabackend.entity.TypeEncadrement;
 import com.asptt.resabackend.resources.adherent.AdherentService;
 import com.asptt.resabackend.resources.plongee.PlongeeService;
 import com.asptt.resabackend.util.CatalogueMessages;
 import com.asptt.resabackend.util.ResaBackendMessage;
 import com.asptt.resabackend.util.ResaUtil;
 
-@Service
+@Service("resaBusiness")
 public class ResaBusinessImpl implements ResaBusiness {
 
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ResaBusinessImpl.class);
@@ -60,9 +62,11 @@ public class ResaBusinessImpl implements ResaBusiness {
 			isOkForResa(plongeeId, order.getAdherentId());
 			break;
 		case DELETE:
-			break;
-		case WAITE:
-			break;
+			throw new NotImplementedException(NotImplemented.GENERIC,"L'option [DELETE] n'est pas encore implementée");
+//			break;
+		case WAIT:
+			throw new NotImplementedException(NotImplemented.GENERIC,"L'option [WAIT] n'est pas encore implementée");
+//			break;
 		}
 		
 	}
@@ -84,9 +88,10 @@ public class ResaBusinessImpl implements ResaBusiness {
 		// Initialisation de l'heure d'ouverture
 		int heureOuverture = getHeureOuverture(adherent, plongee);
 		long nbJours = ResaUtil.calculNbJour(dateDuJour, plongee.getDateReservation());
-//		long nbJours = 0;
-//		int heureCourante = 10;
-//		int heureOuverture = 12;
+		// valeurs pour faire cas de tests
+		//long nbJours = 0;
+		//int heureCourante = 10;
+		//int heureOuverture = 12;
 		// Test si l'adherent est déjà inscrit à la plongée
 		for (String participantId : plongee.getParticipants()) {
 			if (participantId.equalsIgnoreCase(adherent.getNumeroLicense())) {
@@ -97,7 +102,8 @@ public class ResaBusinessImpl implements ResaBusiness {
 
 		// Verification de l'heure d'ouverture a la reservation
 		// Si l'adherent est actif et non encadrant  ou  si c'est un externe
-		if ((!adherent.isVesteRouge() && adherent.getActifInt() == 1) || (adherent.getActifInt() == 2)) {
+		if ((!ResaBusinessRGUtil.isVesteRouge(adherent) && adherent.getActif() == 1) || (adherent.getActif() == 2)
+				|| (adherent.getActif() == 2)) {
 			try {
 				checkHeureOuverture(nbJours, heureCourante, heureOuverture);
 			} catch (FunctionalException e) {
@@ -115,7 +121,8 @@ public class ResaBusinessImpl implements ResaBusiness {
 							adherent.getPrenom(),
 							heureOuverture));
 				default:
-					throw new FunctionalException(Functional.REGISTRATION,ResaBackendMessage.REGISTRATION_GENERIC+" Erreur : "+e.getMessage());
+					throw new FunctionalException(Functional.REGISTRATION,
+							ResaBackendMessage.REGISTRATION_GENERIC+" Erreur : "+e.getMessage());
 				}
 			}
 		}
@@ -158,6 +165,7 @@ public class ResaBusinessImpl implements ResaBusiness {
 		// verifier le nombre d'inscrit
 		if (getNbPlaceRestante(plongee.getNbMaxPlaces(), plongeeId) <= 0) {
 			// TODO trop de monde : inscription en liste d'attente avec msg 'bateau plein'
+			//on inscrit l'adherent en liste d'attente sans envoi de mail : car plongee complete  
 			// isOk = 0;
 			// return isOk;
 			// TODO throw exception
@@ -166,6 +174,7 @@ public class ResaBusinessImpl implements ResaBusiness {
 		// Si il y a des gens en liste d'attente on empile dans la liste d'attente
 		if (plongee.getParticipantsEnAttente().size() > 0) {
 			// TODO il y a des gens en liste d'attente,
+			//on inscrit l'adherent en liste d'attente avec envoi d'un mail : Liste d'attente déjà ouverte
 			// isOk = 5;
 			// return isOk;
 			// TODO throw exception
@@ -177,9 +186,11 @@ public class ResaBusinessImpl implements ResaBusiness {
 		if (!plongeeIsOuverte(plongee)) {
 			if (adherent.isDp() && adherent.isPilote()) {
 				// TODO créer une opération 'order' pour ouvrir une plongée par DP+Pilote encore fermée
+				// le plongeur est DP et Pilote => ouvrir plongee
 				// isOk = 2;
-			} else if (adherent.isVesteRouge()) {
+			} else if (ResaBusinessRGUtil.isVesteRouge(adherent)) {
 				// TODO inscription d'office à la plongée
+				// on inscrit un pilote ou un dp sur une plongée fermée avec envoi d'un mail aux admins
 				// Encadrant ou DP ou Pilote : il peut s'inscrire à la plongée même si elle est fermée
 				// isOk = 3;
 			} else {
@@ -198,14 +209,14 @@ public class ResaBusinessImpl implements ResaBusiness {
 		// recuperation du plongeur DP
 		Adherent dp = serviceAdherent.get(plongee.getDp());
 		String niveauDP = "";
-		if (dp.getEncadrement() != null && !dp.getEncadrement().equals(Encadrement.E2)) {
-			niveauDP = dp.getEncadrement();
+		if (dp.getEncadrement() != null && !dp.getEncadrement().equals(TypeEncadrement.E2)) {
+			niveauDP = dp.getEncadrement().name();
 		} else {
-			niveauDP = dp.getNiveau();
+			niveauDP = dp.getNiveau().name();
 		}
 		if (niveauDP.equalsIgnoreCase("P5")) {
-			if (adherent.getNiveau().equalsIgnoreCase(NiveauAutonomie.BATM.toString())
-					|| adherent.getNiveau().equalsIgnoreCase(NiveauAutonomie.P0.toString())) {
+			if (adherent.getNiveau().name().equalsIgnoreCase(NiveauAutonomie.BATM.toString())
+					|| adherent.getNiveau().name().equalsIgnoreCase(NiveauAutonomie.P0.toString())) {
 				// inscription refusée
 				// throw new ResaException(CatalogueMessages.INSCRIPTION_KO_DP_P5);
 				throw new FunctionalException(Functional.GENERIC, CatalogueMessages.INSCRIPTION_KO_DP_P5);
@@ -214,8 +225,8 @@ public class ResaBusinessImpl implements ResaBusiness {
 
 		// verifier le niveau mini
 		int niveauAdherent = -1;
-		if (!adherent.getNiveau().equalsIgnoreCase(NiveauAutonomie.BATM.toString())) {
-			niveauAdherent = new Integer(adherent.getNiveau().substring(1));
+		if (!adherent.getNiveau().name().equalsIgnoreCase(NiveauAutonomie.BATM.toString())) {
+			niveauAdherent = new Integer(adherent.getNiveau().name().substring(1));
 		}
 
 		// verifier le niveau mini de la plongée
@@ -254,6 +265,7 @@ public class ResaBusinessImpl implements ResaBusiness {
 			// max 4 P0 ou P1 par encadrant
 			if (res > 4) {
 				// Pas assez d'encadrant : liste d'attente avec envoi de mail
+				//on inscrit l'adherent en liste d'attente avec envoi d'un mail : pas assez d'encadrant
 				// isOk = 4;
 				// return isOk;
 				// TODO throw exception
@@ -265,6 +277,7 @@ public class ResaBusinessImpl implements ResaBusiness {
 			// max 1 bapteme par encadrant
 			if (res > 1) {
 				// Pas assez d'encadrant : liste d'attente avec envoi de mail
+				//on inscrit l'adherent en liste d'attente avec envoi d'un mail : pas assez d'encadrant
 				// isOk = 4;
 				// return isOk;
 				// TODO throw exception
@@ -273,12 +286,12 @@ public class ResaBusinessImpl implements ResaBusiness {
 
 		// Issue 69 : limiter le nombre d'encadrant à 7
 		int nbEncadrantMax = new Integer(new Integer(env.getProperty("encadrant.max")).intValue());
-		if (nbEncadrant >= nbEncadrantMax && adherent.isVesteRouge()) {
+		if (nbEncadrant >= nbEncadrantMax && ResaBusinessRGUtil.isVesteRouge(adherent)) {
 			// On créé un externe bidon pour passer a le methode de recherche de l'heure
 			// d'ouvertutre
 			// afin de ramener l'heure d'ouverture pour les externes
 			Adherent ext = new Adherent();
-			ext.setActifInt(2);
+			ext.setActif(2);
 			int heureOuvertureExterne = getHeureOuverture(ext, plongee);
 			if (nbJours > 0) {
 				// La date de visibilité de la plongée n'est pas atteinte : on attend
@@ -304,6 +317,7 @@ public class ResaBusinessImpl implements ResaBusiness {
 
 		// SI on est arrivé jusqu'ici : c'est bon => on inscrit
 		// isOk = 1;
+		// on peut inscrire l'adherent à la plongee
 		// return isOk;
 		// TODO throw exception
 
@@ -331,49 +345,49 @@ public class ResaBusinessImpl implements ResaBusiness {
 		case 1: // Dimanche
 			// test actif == 1 ==> ok c un adherent
 			// sinon c un externe donc inscription par secretatiat
-			if (adh.getActifInt() == 1) {
+			if (adh.getActif() == 1) {
 				heure = new Integer(env.getProperty("ouverture.dimanche.adh")).intValue();
 			} else {
 				heure = new Integer(env.getProperty("ouverture.dimanche.sct")).intValue();
 			}
 			break;
 		case 2: // Lundi
-			if (adh.getActifInt() == 1) {
+			if (adh.getActif() == 1) {
 				heure = new Integer(env.getProperty("ouverture.lundi.adh")).intValue();
 			} else {
 				heure = new Integer(env.getProperty("ouverture.lundi.sct")).intValue();
 			}
 			break;
 		case 3: // Mardi
-			if (adh.getActifInt() == 1) {
+			if (adh.getActif() == 1) {
 				heure = new Integer(env.getProperty("ouverture.mardi.adh")).intValue();
 			} else {
 				heure = new Integer(env.getProperty("ouverture.mardi.sct")).intValue();
 			}
 			break;
 		case 4: // Mercredi
-			if (adh.getActifInt() == 1) {
+			if (adh.getActif() == 1) {
 				heure = new Integer(env.getProperty("ouverture.mercredi.adh")).intValue();
 			} else {
 				heure = new Integer(env.getProperty("ouverture.mercredi.sct")).intValue();
 			}
 			break;
 		case 5: // Jeudi
-			if (adh.getActifInt() == 1) {
+			if (adh.getActif() == 1) {
 				heure = new Integer(env.getProperty("ouverture.jeudi.adh")).intValue();
 			} else {
 				heure = new Integer(env.getProperty("ouverture.jeudi.sct")).intValue();
 			}
 			break;
 		case 6: // Vendredi
-			if (adh.getActifInt() == 1) {
+			if (adh.getActif() == 1) {
 				heure = new Integer(env.getProperty("ouverture.vendredi.adh")).intValue();
 			} else {
 				heure = new Integer(env.getProperty("ouverture.vendredi.sct")).intValue();
 			}
 			break;
 		case 7: // Samedi
-			if (adh.getActifInt() == 1) {
+			if (adh.getActif() == 1) {
 				heure = new Integer(env.getProperty("ouverture.samedi.adh")).intValue();
 			} else {
 				heure = new Integer(env.getProperty("ouverture.samedi.sct")).intValue();
@@ -467,5 +481,5 @@ public class ResaBusinessImpl implements ResaBusiness {
 			return isOk;
 		}
 	}
-
+	
 }

@@ -1,0 +1,80 @@
+package com.asptt.resabackend.mock;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.MockitoAnnotations;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.test.context.web.AnnotationConfigWebContextLoader;
+import org.springframework.test.context.web.WebAppConfiguration;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.web.context.WebApplicationContext;
+
+import com.asptt.resabackend.entity.Adherent;
+
+@RunWith(SpringJUnit4ClassRunner.class)
+@WebAppConfiguration
+@ContextConfiguration(loader = AnnotationConfigWebContextLoader.class, classes = ControleurConfigurationTest.class)
+@ActiveProfiles(profiles = "test")
+@ComponentScan(basePackages= {"com.asptt.resabackend", "com.asptt.resa.commons" })
+public class AdherentResourceImplTest {
+
+	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(AdherentResourceImplTest.class);
+
+	@Value("${pagination.limit}")
+	private String basePath;
+	
+    @Autowired
+    private WebApplicationContext webAppContext;
+
+    private MockMvc mockMvc;
+    
+    @Before
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+        mockMvc = MockMvcBuilders.webAppContextSetup(webAppContext).dispatchOptions(true).build();
+//        mockMvc = MockMvcBuilders.standaloneSetup(AdherentResourceImpl.class).build();
+    }
+
+	@Test
+	public void createAdherent() throws Exception {
+		LOGGER.info("recup variable dans les propoerties =["+basePath+"]");
+
+		Adherent adh = new Adherent();
+		adh.setNumeroLicense("unnumero");
+
+//		RequestBuilder requestBuilder = MockMvcRequestBuilders
+//				.post("adherent",adh)
+//				.accept(MediaType.APPLICATION_JSON)
+//				.contentType(MediaType.APPLICATION_JSON)
+//				.header("Authorization", "");
+		
+		RequestBuilder requestBuilder = MockMvcRequestBuilders
+				.get("adherent/096042")
+				.accept(MediaType.APPLICATION_JSON)
+				.contentType(MediaType.APPLICATION_JSON)
+				.header("Authorization", "Basic dXNlcjpwYXNzd29yZA==");
+		MvcResult result = mockMvc.perform(requestBuilder).andReturn();
+
+		MockHttpServletResponse response = result.getResponse();
+
+		Assert.assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatus());
+
+
+	}
+
+}

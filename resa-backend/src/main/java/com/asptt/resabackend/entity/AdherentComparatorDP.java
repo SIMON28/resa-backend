@@ -6,8 +6,8 @@ public class AdherentComparatorDP implements Comparator<Adherent> {
 
 	@Override
 	public int compare(Adherent o1, Adherent o2) {
-		String e1 = o1.getEncadrement();
-		String e2 = o2.getEncadrement();
+		String e1 = o1.getEncadrement().name();
+		String e2 = o2.getEncadrement().name();
 		int comp = -1;
 		if(null == e1){
 			comp = 1;

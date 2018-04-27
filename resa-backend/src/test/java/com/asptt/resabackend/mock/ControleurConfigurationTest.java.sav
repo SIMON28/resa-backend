@@ -1,0 +1,25 @@
+package com.asptt.resabackend.mock;
+
+import org.springframework.boot.web.support.SpringBootServletInitializer;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+
+@Configuration
+@EnableWebMvc
+@ComponentScan(basePackages= {"com.asptt.resabackend.mock"})
+public class ControleurConfigurationTest extends SpringBootServletInitializer {
+	
+//	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ControleurConfigurationTest.class);
+//
+//	@Override
+//	protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
+//	    LOGGER.trace("Starting application TEST");
+//	    return application.sources(ControleurConfigurationTest.class);
+//	}
+//
+//	public static void main(String[] args) {
+//		SpringApplication.run(ControleurConfigurationTest.class, args);
+//	}
+
+}

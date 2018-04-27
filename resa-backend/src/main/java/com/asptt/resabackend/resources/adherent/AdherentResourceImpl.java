@@ -90,6 +90,18 @@ public class AdherentResourceImpl extends ResourceBase<Adherent> implements Adhe
 		return response;
 	}
 
+	@GET
+	@Produces({ MediaType.APPLICATION_JSON })
+	@Override
+	public Response find() {
+		List<Adherent> adhs = getService().find();
+		
+		final Object entities = constructAdherentEntities(convAdherentList(adhs),
+				AdherentSpecification.getAdherentFullView());
+
+		return Response.ok(entities).build();
+	}
+
 	/* update full */
 	@PUT
 	@Path("{id}")

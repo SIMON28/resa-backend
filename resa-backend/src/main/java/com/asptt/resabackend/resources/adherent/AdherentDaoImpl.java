@@ -24,8 +24,9 @@ import com.asptt.resa.commons.exception.NotFound;
 import com.asptt.resa.commons.exception.NotFoundException;
 import com.asptt.resa.commons.exception.Technical;
 import com.asptt.resa.commons.exception.TechnicalException;
+import com.asptt.resabackend.business.ResaBusinessRGUtil;
 import com.asptt.resabackend.entity.Adherent;
-import com.asptt.resabackend.entity.Adherent.Roles;
+import com.asptt.resabackend.entity.TypeRoles;
 import com.asptt.resabackend.mapper.AdherentRowMapper;
 import com.asptt.resabackend.mapper.SqlSearchCriteria;
 import com.asptt.resabackend.resources.NomResources;
@@ -58,11 +59,12 @@ public class AdherentDaoImpl implements AdherentDao {
 				ps.setString(1, adh.getNumeroLicense());
 				ps.setString(2, adh.getNom());
 				ps.setString(3, adh.getPrenom());
-				ps.setString(4, adh.getNiveau());
+				ps.setString(4, adh.getNiveau().name());
 				ps.setString(5, adh.getTelephone());
 				ps.setString(6, adh.getMail());
-				if (adh.isEncadrent()) {
-					ps.setString(7, adh.getEncadrement());
+//				ps.setString(7, adh.getEncadrement().name());
+				if (null != adh.getEncadrement()) {
+					ps.setString(7, adh.getEncadrement().name());
 				} else {
 					ps.setString(7, null);
 				}
@@ -71,7 +73,7 @@ public class AdherentDaoImpl implements AdherentDao {
 				} else {
 					ps.setInt(8, 0);
 				}
-				ps.setInt(9, adh.getActifInt());
+				ps.setInt(9, adh.getActif());
 				ps.setString(10, adh.getNumeroLicense());
 				Timestamp tsCm = new Timestamp(adh.getDateCM().getTime());
 				ps.setTimestamp(11, tsCm);
@@ -83,7 +85,7 @@ public class AdherentDaoImpl implements AdherentDao {
 				}
 				ps.setString(14, adh.getCommentaire());
 				if (adh.isAptitude()) {
-					ps.setString(15, adh.getAptitude());
+					ps.setString(15, adh.getAptitude().name());
 				} else {
 					ps.setString(15, null);
 				}
@@ -91,10 +93,11 @@ public class AdherentDaoImpl implements AdherentDao {
 			}, keyHolder);
 			Number idAdh = keyHolder.getKey();
 			// gestion des roles
-			if (adh.getActifInt() == 1) {
+//			if (adh.getActifInt() == 1) {
+			if (ResaBusinessRGUtil.isActif(adh)) {
 				// On gere les role uniquement pour les actifs
 				try {
-					Iterator<Roles> it = adh.getRoles().iterator();
+					Iterator<TypeRoles> it = adh.getRoles().iterator();
 					StringBuffer sql1 = new StringBuffer();
 					sql1.append("INSERT INTO REL_ADHERENT_ROLES (`ADHERENT_LICENSE`, `ROLES_idROLES`)");
 					sql1.append(" VALUES (?, ?)");
@@ -103,7 +106,7 @@ public class AdherentDaoImpl implements AdherentDao {
 							PreparedStatement ps = connection.prepareStatement(sql1.toString(),
 									Statement.RETURN_GENERATED_KEYS);
 							ps.setString(1, adh.getNumeroLicense());
-							Adherent.Roles role = it.next();
+							TypeRoles role = it.next();
 							int id = getIdRole(role.name());
 							ps.setInt(2, id);
 							return ps;
@@ -223,11 +226,12 @@ public class AdherentDaoImpl implements AdherentDao {
 			// update de l'adherent
 			jdbcTemplate.update(connection -> {
 				PreparedStatement ps = connection.prepareStatement(sql.toString(), Statement.RETURN_GENERATED_KEYS);
-				ps.setString(1, resource.getNiveau());
+				ps.setString(1, resource.getNiveau().name());
 				ps.setString(2, resource.getTelephone());
 				ps.setString(3, resource.getMail());
-				if (resource.isEncadrent()) {
-					ps.setString(4, resource.getEncadrement());
+//				ps.setString(4, resource.getEncadrement().name());
+				if (null != resource.getEncadrement()) {
+					ps.setString(4, resource.getEncadrement().name());
 				} else {
 					ps.setString(4, null);
 				}
@@ -236,7 +240,7 @@ public class AdherentDaoImpl implements AdherentDao {
 				} else {
 					ps.setInt(5, 0);
 				}
-				ps.setInt(6, resource.getActifInt());
+				ps.setInt(6, resource.getActif());
 				ps.setString(7, resource.getNom());
 				ps.setString(8, resource.getPrenom());
 				Timestamp ts = new Timestamp(resource.getDateCM().getTime());
@@ -249,7 +253,7 @@ public class AdherentDaoImpl implements AdherentDao {
 				}
 				ps.setString(12, resource.getCommentaire());
 				if (resource.isAptitude()) {
-					ps.setString(13, resource.getAptitude());
+					ps.setString(13, resource.getAptitude().name());
 				} else {
 					ps.setString(13, null);
 				}
@@ -274,7 +278,7 @@ public class AdherentDaoImpl implements AdherentDao {
 	}
 
 	@Override
-	public void createRoleForAdherent(String numeroDeLicense, Roles role) {
+	public void createRoleForAdherent(String numeroDeLicense, TypeRoles role) {
 		try {
 			KeyHolder keyHolder = new GeneratedKeyHolder();
 			StringBuffer sql2 = new StringBuffer();
@@ -295,7 +299,7 @@ public class AdherentDaoImpl implements AdherentDao {
 	}
 
 	@Override
-	public void deleteRoleForAdherent(String numeroDeLicense, Roles role) {
+	public void deleteRoleForAdherent(String numeroDeLicense, TypeRoles role) {
 		try {
 			KeyHolder keyHolder = new GeneratedKeyHolder();
 			StringBuffer sql1 = new StringBuffer();

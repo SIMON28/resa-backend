@@ -10,30 +10,20 @@ public class Adherent implements Serializable {
 
 	private static final long serialVersionUID = -8569233748603210161L;
 
-	public static enum Encadrement {
-
-		E2, E3, E4
-	}
-
-	public static enum Roles {
-		ADMIN, USER, SECRETARIAT, DP, ENCADRANT
-	}
-
 	private String numeroLicense; // ID
 	private String nom;
 	private String prenom;
-	private Encadrement encadrement;
+	private TypeEncadrement encadrement;
 	private NiveauAutonomie niveau;
 	private Aptitude aptitude;
 	private boolean pilote;
 	private boolean tiv;
 	private boolean dp;
-	private boolean actif;
-	private int intActif = 1;
+	private int actif;
 	private Byte[] photo; // au format jpeg ??
 	private String telephone;
 	private String mail;
-	private List<Roles> roles;
+	private List<TypeRoles> roles;
 	// private String role;
 	private String password;
 	private String commentaire;
@@ -53,7 +43,8 @@ public class Adherent implements Serializable {
 		// valeurs par défaut
 		pilote = false;
 		dp = false;
-		actif = false;
+		actif = 1;
+		niveau = NiveauAutonomie.P0;
 	}
 
 	public String getPrenom() {
@@ -80,114 +71,78 @@ public class Adherent implements Serializable {
 		this.nom = nom;
 	}
 
-	public Encadrement getEnumEncadrement() {
+	public boolean isDp() {
+		return dp;
+	}
+
+//	public boolean isEncadrent() {
+//		if (null == getEncadrement()) {
+//			return false;
+//		} else {
+//			return true;
+//		}
+//	}
+
+	public void setEncadrement(TypeEncadrement encadrement) {
+//		if (null == encadrement) {
+//			this.encadrement = null;
+//		} else {
+//			if (encadrement.equals(TypeEncadrement.E3) || encadrement.equals(TypeEncadrement.E4)) {
+//				setDp(true);
+//			}
+//			this.encadrement = encadrement;
+//		}
+		this.encadrement = encadrement;
+	}
+
+	public TypeEncadrement getEncadrement() {
 		return encadrement;
 	}
 
-	public boolean isEncadrent() {
-		if (null == getEncadrement()) {
-			return false;
-		} else {
-			return true;
-		}
+	public NiveauAutonomie getNiveau() {
+//		if (null == niveau) {
+//			return NiveauAutonomie.P0;
+//		} else {
+//			return niveau;
+//		}
+		return niveau;
 	}
 
-	public String getEncadrement() {
-		if (null == encadrement) {
-			return null;
-		} else {
-			return encadrement.toString();
-		}
-	}
-
-	public String getPrerogative() {
-		if (isEncadrent()) {
-			return getEncadrement();
-		} else {
-			// petite verrue du 19/05/2011 demandée exclusivement pour notre ami Bernard
-			// SANGUEDOLCE
-			if (this.getNumeroLicense().equalsIgnoreCase("095821")) {
-				return "E1";
-			} else {
-				return getNiveau();
-			}
-		}
-	}
-
-	public void setEnumEncadrement(Encadrement encadrement) {
-		if (null == encadrement) {
-			this.encadrement = null;
-		} else {
-			if (encadrement.equals(Encadrement.E3) || encadrement.equals(Encadrement.E4)) {
-				setDp(true);
-			}
-			this.encadrement = encadrement;
-		}
-	}
-
-	public void setEncadrement(String encadrement) {
-		if (null != encadrement) {
-			if (encadrement.equals("E3") || encadrement.equals("E4")) {
-				setDp(true);
-			}
-			setEnumEncadrement(Encadrement.valueOf(encadrement));
-		}
-	}
-
-	public NiveauAutonomie getEnumNiveau() {
-		if (null == niveau) {
-			return NiveauAutonomie.P0;
-		} else {
-			return niveau;
-		}
-	}
-
-	public String getNiveau() {
-		if (null == niveau) {
-			return NiveauAutonomie.P0.toString();
-		} else {
-			return niveau.toString();
-		}
-	}
-
-	public void setEnumNiveau(NiveauAutonomie niveau) {
-		if (niveau.equals(NiveauAutonomie.P5)) {
-			setDp(true);
-		}
+	public void setNiveau(NiveauAutonomie niveau) {
+//		if (niveau.equals(NiveauAutonomie.P5)) {
+//			setDp(true);
+//		}
 		this.niveau = niveau;
 	}
 
-	public void setNiveau(String niveau) {
-		setEnumNiveau(NiveauAutonomie.valueOf(niveau));
-	}
-
-	public Aptitude getEnumAptitude() {
-		return aptitude;
-	}
-
 	public boolean isAptitude() {
-		if (null == getAptitude() || getAptitude().equals("")) {
+		if (null == getAptitude() || getAptitude().name().equals("")) {
 			return false;
 		} else {
 			return true;
 		}
 	}
 
-	public String getAptitude() {
-		if (null == aptitude) {
-			return null;
+	public Aptitude getAptitude() {
+		return aptitude;
+	}
+
+	public void setAptitude(Aptitude aptitude) {
+		if (null == aptitude || aptitude.getText().equals("")) {
+			this.aptitude = null;
 		} else {
-			return aptitude.getText();
+			this.aptitude = aptitude;
 		}
 	}
 
 	public String getAptitudeFS() {
 		String result = "";
 		if (null == aptitude || aptitude.toString().equals("")) {
-			if (isEncadrent()) {
-				result = getEncadrement();
+//			if (isEncadrent()) {
+			if (null != getEncadrement()) {
+				result = getEncadrement().name();
 			} else {
-				switch (getEnumNiveau()) {
+				switch (getNiveau()) {
 				case BATM:
 					result = "BATM";
 					break;
@@ -217,18 +172,6 @@ public class Adherent implements Serializable {
 		}
 	}
 
-	public void setEnumAptitude(Aptitude aptitude) {
-		if (null == aptitude || aptitude.getText().equals("")) {
-			this.aptitude = null;
-		} else {
-			this.aptitude = aptitude;
-		}
-	}
-
-	public void setAptitude(String aptitude) {
-		setEnumAptitude(Aptitude.valueOf(aptitude));
-	}
-
 	public boolean isPilote() {
 		return pilote;
 	}
@@ -237,67 +180,12 @@ public class Adherent implements Serializable {
 		this.pilote = pilote;
 	}
 
-	public boolean isActif() {
+	public int getActif() {
 		return actif;
 	}
 
-	public int getActifInt() {
-		return intActif;
-	}
-
-	public void setActif(boolean actif) {
+	public void setActif(int actif) {
 		this.actif = actif;
-		if (actif) {
-			this.intActif = 1;
-		} else {
-			this.intActif = 0;
-		}
-	}
-
-	public void setActifInt(int actif) {
-		this.intActif = actif;
-		if (actif == 1) {
-			this.actif = true;
-		} else {
-			this.actif = false;
-		}
-	}
-
-	public boolean isDp() {
-		if (getEnumNiveau().equals(NiveauAutonomie.P5)) {
-			return true;
-		} else {
-			if (getEncadrement() != null) {
-				if (getEnumEncadrement().equals(Encadrement.E3) || getEnumEncadrement().equals(Encadrement.E4)) {
-					return true;
-				}
-			}
-			return false;
-		}
-	}
-
-	/**
-	 * Une veste rouge peut-être : Un encadrant, un DP ou u Pilote Mais pas un
-	 * externe => le test : et actif =1
-	 *
-	 * @return
-	 */
-	public boolean isVesteRouge() {
-		boolean vesteRouge = false;
-		if (getActifInt() == 1) {
-			if (getEncadrement() != null) {
-				vesteRouge=true;
-			}
-			if (isDp()) {
-				vesteRouge=true;
-			}
-			if (isPilote()) {
-				vesteRouge=true;
-			}
-		}
-		// return ( (getEncadrement() != null || isDp() || isPilote() ) && getActifInt()
-		// == 1);
-		return vesteRouge;
 	}
 
 	public void setDp(boolean dp) {
@@ -328,23 +216,10 @@ public class Adherent implements Serializable {
 		this.mail = mail;
 	}
 
-	// public String getRole() {
-	// if (null == roles) {
-	// return Roles.USER.toString();
-	// }
-	// return roles.valueOf(String<>, name);
-	// }
-	//
-	// public void setRole(String role) {
-	// if (null == this.roles) {
-	// this.roles = Roles.valueOf(role);
-	// }
-	// }
-
-	public List<Roles> getRoles() {
+	public List<TypeRoles> getRoles() {
 		if (null == roles) {
 			roles = new ArrayList<>();
-			roles.add(Roles.USER);
+			roles.add(TypeRoles.USER);
 		}
 		return roles;
 	}
@@ -352,36 +227,8 @@ public class Adherent implements Serializable {
 	public void setRoles(List<String> l_roles) {
 		this.roles = new ArrayList<>();
 		for (String s_role : l_roles) {
-			this.roles.add(Roles.valueOf(s_role));
+			this.roles.add(TypeRoles.valueOf(s_role));
 		}
-	}
-
-	public String getNomComplet() {
-		// Dès que le plongeur est encadrant, on affiche son niveau d'encadrement
-		String niveauAffiche;
-		if (getEncadrement() != null) {
-			niveauAffiche = getEncadrement();
-		} else {
-			niveauAffiche = getNiveau();
-		}
-
-		// Pour les externes, le niveau est suffixé par (Ext.)
-		if (getActifInt() == 2) {
-			niveauAffiche = niveauAffiche + " (Ext.)";
-		}
-
-		return nom + " " + prenom + " " + niveauAffiche + " (" + telephone + ")";
-	}
-
-	public String getNomCompletFS() {
-
-		// Pour les externes, ne nom est suffixé par (Ext.)
-		String ext = "";
-		if (getActifInt() == 2) {
-			ext = ext + " (Ext.)";
-		}
-
-		return nom + " " + prenom + " " + ext;
 	}
 
 	public Date getDateCM() {
