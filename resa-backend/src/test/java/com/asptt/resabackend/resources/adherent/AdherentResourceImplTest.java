@@ -59,7 +59,7 @@ public class AdherentResourceImplTest {
 
 		MockHttpServletResponse response = result.getResponse();
 
-		Assert.assertEquals(HttpStatus.OK.value(), response.getStatus());
+		Assert.assertEquals(HttpStatus.NOT_FOUND.value(), response.getStatus());
 		
 	}
 

@@ -25,7 +25,7 @@ public interface AdherentResource extends Resource<Adherent> {
 
 	Response findPlongees(UriInfo uriInfo, String adherentId);
 
-	Response find();
+//	Response findAll();
 
 //	Response inscrireToDive(UriInfo uriInfo, String adherentId, Integer plongeeId);
 //
